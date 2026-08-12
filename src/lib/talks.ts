@@ -39,8 +39,7 @@ export const talks: Talk[] = [
     title: 'shadcn/uiで考えるコンポーネント設計',
     url: 'https://speakerdeck.com/ryokatsuse/uitekao-erukonhonentoshe-ji',
     date: '2024-09-06',
-    event:
-      'ゆめみ×LayerX×サイボウズ3社合同フロントエンドカンファレンス北海道2024後夜祭＠東京',
+    event: 'ゆめみ×LayerX×サイボウズ3社合同フロントエンドカンファレンス北海道2024後夜祭＠東京',
     scope: 'external',
   },
   {
@@ -79,18 +78,16 @@ export const talks: Talk[] = [
     scope: 'internal',
   },
   {
-    title:
-      '友達ではなく仲間とはなにか？ 〜『映像研には手を出すな！』から学ぶ仕事の取り組み方〜',
+    title: '友達ではなく仲間とはなにか？ 〜『映像研には手を出すな！』から学ぶ仕事の取り組み方〜',
     url: 'https://speakerdeck.com/ryokatsuse/you-da-dehanakuzhong-jian-tohananika-ying-xiang-yan-nihashou-wochu-suna-karaxue-bushi-shi-noqu-rizu-mifang',
     date: '2025-08-10',
     event: '【劇場版】アニメから得た学びを発表会 2025',
     scope: 'external',
   },
   {
-    title:
-      'アクセシビリティの自動テストはどのように行われているのか？ axe-coreの処理を巡る旅',
+    title: 'アクセシビリティの自動テストはどのように行われているのか？ axe-coreの処理を巡る旅',
     url: 'https://axe-core-deep-dive.vercel.app/1',
-    date: '2026-01-10',
+    date: '2026-01-09',
     event: 'BuriKaigi 2026',
     scope: 'external',
   },
@@ -104,7 +101,7 @@ export const talks: Talk[] = [
   {
     title: 'inferと仲良くなる10分間',
     url: 'https://speakerdeck.com/ryokatsuse/infertozhong-liang-kunaru10fen-jian',
-    date: '2026-05-01',
+    date: '2026-05-24',
     event: 'TSKaigi 2026',
     scope: 'external',
   },

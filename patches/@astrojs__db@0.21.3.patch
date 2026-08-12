@@ -1,0 +1,30 @@
+diff --git a/dist/core/integration/index.js b/dist/core/integration/index.js
+index 2cd02f5993a25b7c3e09cdcb487bfb9f5f621892..dda69c03a4c23f34143557081256236ec687f41d 100644
+--- a/dist/core/integration/index.js
++++ b/dist/core/integration/index.js
+@@ -117,7 +117,7 @@ function astroDBIntegration(options) {
+         });
+       },
+       "astro:server:setup": async ({ server, logger }) => {
+-        const environment = server.environments.ssr;
++        const environment = server.environments.ssr ?? Object.values(server.environments ?? {}).find((e) => e && e.runner);
+         seedHandler.execute = async (fileUrl) => {
+           await executeSeedFile({ fileUrl, environment });
+         };
+@@ -139,9 +139,13 @@ function astroDBIntegration(options) {
+           (name) => new URL(name, getDbDirectoryUrl(root))
+         );
+         if (seedFiles.get().length || localSeedPaths.find((path) => existsSync(path))) {
+-          await environment.runner.import(VIRTUAL_MODULE_ID).catch((e) => {
+-            logger.error(e instanceof Error ? e.message : String(e));
+-          });
++          if (environment && environment.runner) {
++            await environment.runner.import(VIRTUAL_MODULE_ID).catch((e) => {
++              logger.error(e instanceof Error ? e.message : String(e));
++            });
++          } else {
++            logger.warn("Skipping local DB seed: no Vite environment with a module runner was found.");
++          }
+         }
+       },
+       "astro:build:start": async ({ logger }) => {

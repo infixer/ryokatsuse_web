@@ -122,6 +122,13 @@ export const talks: Talk[] = [
     event: 'Browser and UI #4 Any',
     scope: 'external',
   },
+  {
+    title: 'なぜ<image>タグではなく<img>タグなのか',
+    url: 'https://html-only-presentation.vercel.app/index.html',
+    date: '2026-08-07',
+    event: 'HTML Night in Tokyo',
+    scope: 'external',
+  },
 ];
 
 /** 作ったもの */

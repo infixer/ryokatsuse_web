@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@astrojs/db@0.21.3':
+    hash: 4302c1075e52f8c75a3ff0e7b6c3d155ec55af60cd3079eb5e50db3098691cee
+    path: patches/@astrojs__db@0.21.3.patch
+
 importers:
 
   .:
@@ -12,8 +17,8 @@ importers:
         specifier: ^14.1.6
         version: 14.1.6(@types/node@24.12.0)(astro@7.0.2(@astrojs/markdown-remark@7.2.0)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@24.12.0)(@vercel/functions@3.4.3)(jiti@2.6.1)(rollup@4.59.0)(tsx@4.23.1)(yaml@2.9.0))(esbuild@0.28.1)(jiti@2.6.1)(tsx@4.23.1)(wrangler@4.115.0)(yaml@2.9.0)
       '@astrojs/db':
-        specifier: ^0.21.3
-        version: 0.21.3
+        specifier: 0.21.3
+        version: 0.21.3(patch_hash=4302c1075e52f8c75a3ff0e7b6c3d155ec55af60cd3079eb5e50db3098691cee)
       '@astrojs/mdx':
         specifier: ^7.0.0
         version: 7.0.0(@astrojs/markdown-satteri@0.3.2)(astro@7.0.2(@astrojs/markdown-remark@7.2.0)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@24.12.0)(@vercel/functions@3.4.3)(jiti@2.6.1)(rollup@4.59.0)(tsx@4.23.1)(yaml@2.9.0))
@@ -3442,18 +3447,6 @@ packages:
     resolution: {integrity: sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==}
     engines: {node: '>=10'}
 
-  ws@8.19.0:
-    resolution: {integrity: sha512-blAT2mjOEIi0ZzruJfIhb3nps74PRWTCz1IjglWEEpQl5XS/UNama6u2/rjFkDDouqr4L67ry+1aGIALViWjDg==}
-    engines: {node: '>=10.0.0'}
-    peerDependencies:
-      bufferutil: ^4.0.1
-      utf-8-validate: '>=5.0.2'
-    peerDependenciesMeta:
-      bufferutil:
-        optional: true
-      utf-8-validate:
-        optional: true
-
   ws@8.21.0:
     resolution: {integrity: sha512-Vsp28b7DRcimFQvrqu2Wek3z1iYxDCWqHYB8Qsnk/S4RfaCQzPGPyBNuVjJV3cd6UiKtUtp6sNM77gWvzcCH+g==}
     engines: {node: '>=10.0.0'}
@@ -3622,7 +3615,7 @@ snapshots:
 
   '@astrojs/compiler@2.13.1': {}
 
-  '@astrojs/db@0.21.3':
+  '@astrojs/db@0.21.3(patch_hash=4302c1075e52f8c75a3ff0e7b6c3d155ec55af60cd3079eb5e50db3098691cee)':
     dependencies:
       '@clack/prompts': 1.1.0
       '@libsql/client': 0.17.0
@@ -4508,7 +4501,7 @@ snapshots:
   '@libsql/isomorphic-ws@0.1.5':
     dependencies:
       '@types/ws': 8.18.1
-      ws: 8.19.0
+      ws: 8.21.0
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -7228,8 +7221,6 @@ snapshots:
       ansi-styles: 4.3.0
       string-width: 4.2.3
       strip-ansi: 6.0.1
-
-  ws@8.19.0: {}
 
   ws@8.21.0: {}
 

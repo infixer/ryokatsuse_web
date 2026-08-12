@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.1.6",
-    "@astrojs/db": "^0.21.3",
+    "@astrojs/db": "0.21.3",
     "@astrojs/mdx": "^7.0.0",
     "@astrojs/react": "^6.0.0",
     "@astrojs/rss": "^4.0.18",
@@ -34,7 +34,10 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "workerd"
-    ]
+    ],
+    "patchedDependencies": {
+      "@astrojs/db@0.21.3": "patches/@astrojs__db@0.21.3.patch"
+    }
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",

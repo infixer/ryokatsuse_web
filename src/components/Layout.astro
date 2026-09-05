@@ -38,16 +38,22 @@ declare global {
 <html lang="ja">
   <head>
     <!-- ダークモード初期化（FOUC防止のため最初に実行） -->
+    <!-- theme は 'light' | 'dark' | 未設定（= システム設定に従う）の3状態 -->
     <script is:inline>
       (function() {
         const theme = localStorage.getItem('theme');
-        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        const isDark = theme === 'light' || theme === 'dark'
+          ? theme === 'dark'
+          : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (isDark) {
           document.documentElement.classList.add('dark');
         }
       })();
     </script>
     <!-- メインCSS読み込み前のちらつき防止 -->
     <style is:inline>
+      /* ライト固定時はOSがダークでもフォームやスクロールバーが暗くならないよう明示する */
+      html:not(.dark) { color-scheme: light; }
       html.dark { color-scheme: dark; background-color: oklch(26.9% 0 0); }
       html.dark body { background-color: oklch(26.9% 0 0); color: oklch(98.5% 0.002 247.839); }
       a { color: inherit; }

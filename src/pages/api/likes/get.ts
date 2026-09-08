@@ -1,7 +1,6 @@
 import type { APIContext } from 'astro';
-// @ts-expect-error - Astro DB型定義の問題
-import { db, Likes } from 'astro:db';
 import { eq } from 'drizzle-orm';
+import { getDb, Likes } from '../../../lib/db';
 
 export async function GET(context: APIContext) {
   const slug = context.url.searchParams.get('slug');
@@ -17,6 +16,7 @@ export async function GET(context: APIContext) {
   }
 
   // DBからいいね数を取得
+  const db = getDb();
   const result = await db.select().from(Likes).where(eq(Likes.slug, slug));
   const count = result[0]?.count ?? 0;
 

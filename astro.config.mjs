@@ -6,8 +6,6 @@ import mdx from '@astrojs/mdx';
 import cloudflare from '@astrojs/cloudflare';
 import { markdownComponents } from './src/integrations/markdown-components';
 
-import db from '@astrojs/db';
-
 // https://astro.build/config
 export default defineConfig({
   site: 'https://infixer.net',
@@ -26,10 +24,6 @@ export default defineConfig({
       },
     }),
     markdownComponents(),
-    db({
-      // Workers 上では @libsql/client の Node ビルド（node:http 依存）が動かないため web ビルドを使う
-      mode: 'web',
-    }),
   ],
   image: {
     service: {
@@ -64,7 +58,7 @@ export default defineConfig({
     resolve: {
       dedupe: ['react', 'react-dom'],
       alias: {
-        // astro:db → hrana-client が cross-fetch(node-fetch) を掴むと Workers 上で落ちる
+        // @libsql/hrana-client が cross-fetch(node-fetch) を掴むと Workers 上で落ちる
         'cross-fetch': new URL('./src/lib/cross-fetch-shim.ts', import.meta.url).pathname,
       },
     },

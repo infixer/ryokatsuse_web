@@ -126,6 +126,13 @@ export const talks: Talk[] = [
     event: 'HTML Night in Tokyo',
     scope: 'external',
   },
+  {
+    title: 'Web Haptics APIを語りたい',
+    url: 'https://speakerdeck.com/ryokatsuse/web-haptics-api-o-kataritai',
+    date: '2026-09-17',
+    event: 'Web UI 実装勉強会 #4',
+    scope: 'external',
+  },
 ];
 
 /** 作ったもの */

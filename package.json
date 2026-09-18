@@ -4,6 +4,7 @@
   "private": true,
   "packageManager": "pnpm@10.11.1",
   "scripts": {
+    "test:discovery": "tsx --test tests/discovery.test.ts",
     "dev": "astro dev",
     "start": "astro dev",
     "og": "tsx scripts/generate-og.mts",

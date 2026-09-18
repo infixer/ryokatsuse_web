@@ -11,6 +11,8 @@ export default defineConfig({
   site: 'https://infixer.net',
   output: 'server',
   adapter: cloudflare({
+    // AIのリモート接続は明示的に有効化。CI/画面開発では認証を要求しない。
+    remoteBindings: process.env.JEV_REMOTE === 'true',
     // Workers 実行時に sharp は動かないため、画像最適化はビルド時に済ませる
     imageService: 'compile',
   }),

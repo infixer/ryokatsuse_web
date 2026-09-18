@@ -23,6 +23,8 @@ jobs:
 
       - run: pnpm lint
 
+      - run: pnpm test:discovery
+
   astro-check:
     name: Astro Check
     runs-on: ubuntu-latest

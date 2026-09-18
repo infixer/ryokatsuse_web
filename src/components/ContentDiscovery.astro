@@ -1,0 +1,94 @@
+<section class="discovery" aria-labelledby="discovery-title">
+  <h2 id="discovery-title">どんな話が読みたい？</h2>
+  <p id="discovery-help">気になることを文章で教えてください。記事や登壇資料から探します。</p>
+  <form id="discovery-form">
+    <label for="discovery-query">読みたいこと</label>
+    <div class="discovery-controls">
+      <input id="discovery-query" name="query" type="text" required maxlength="200" aria-describedby="discovery-help discovery-note" placeholder="例：アクセシビリティの自動テストの仕組みを知りたい" />
+      <button type="submit">探す</button>
+    </div>
+  </form>
+  <p id="discovery-note" class="discovery-note">AIが候補を選びます。入力した文章は検索のためにCloudflare・TypeSafeへ送信されます。</p>
+  <noscript><p>この検索にはJavaScriptが必要です。<a href="/blog">記事一覧</a>からも探せます。</p></noscript>
+  <p id="discovery-status" role="status" aria-live="polite" aria-atomic="true"></p>
+  <ul id="discovery-results" aria-label="おすすめの記事・登壇資料"></ul>
+</section>
+
+<script>
+  import type { DiscoveryItem } from '../lib/discovery';
+
+  const form = document.querySelector<HTMLFormElement>('#discovery-form');
+  const input = document.querySelector<HTMLInputElement>('#discovery-query');
+  const button = form?.querySelector<HTMLButtonElement>('button');
+  const status = document.querySelector<HTMLElement>('#discovery-status');
+  const results = document.querySelector<HTMLUListElement>('#discovery-results');
+
+  if (form && input && button && status && results) {
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (button.disabled) return;
+      const query = input.value.trim();
+      if (!query) {
+        status.textContent = '読みたいことを入力してください。';
+        input.focus();
+        return;
+      }
+      button.disabled = true;
+      input.readOnly = true;
+      results.replaceChildren();
+      results.setAttribute('aria-busy', 'true');
+      status.textContent = '記事と登壇資料を探しています…';
+      try {
+        const response = await fetch('/api/discover', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query }),
+          signal: AbortSignal.timeout(20_000),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || '検索できませんでした。もう一度お試しください。');
+        const items: DiscoveryItem[] = data.results;
+        for (const item of items) {
+          const li = document.createElement('li');
+          const link = document.createElement('a');
+          const description = document.createElement('p');
+          const kind = document.createElement('span');
+          link.href = item.url;
+          link.textContent = item.title;
+          kind.textContent = item.kind === '登壇資料' ? '登壇資料・外部サイト' : '記事';
+          description.textContent = item.description;
+          li.append(kind, link, description);
+          results.append(li);
+        }
+        status.textContent = items.length ? `${items.length}件の候補が見つかりました。` : 'ぴったりの候補が見つかりませんでした。別の言い方やテーマで試してみてください。';
+      } catch (error) {
+        status.textContent = error instanceof Error && error.name === 'Error' ? error.message : '検索できませんでした。時間をおいてもう一度お試しください。';
+      } finally {
+        button.disabled = false;
+        input.readOnly = false;
+        results.removeAttribute('aria-busy');
+      }
+    });
+  }
+</script>
+
+<style>
+  .discovery { margin-bottom: 3rem; padding: 1.5rem; border: 1px solid #737373; border-radius: .75rem; }
+  h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: .5rem; }
+  form { margin-top: 1rem; }
+  label { display: block; font-weight: 700; margin-bottom: .5rem; }
+  .discovery-controls { display: flex; gap: .75rem; }
+  input { width: 100%; min-width: 0; padding: .75rem; border: 1px solid #737373; border-radius: .375rem; background: transparent; color: inherit; }
+  input::placeholder { color: inherit; opacity: .7; }
+  button { flex-shrink: 0; padding: .75rem 1.25rem; background: #262626; color: white; border: 1px solid #737373; border-radius: .375rem; font-weight: 700; cursor: pointer; }
+  button:disabled { opacity: .6; cursor: wait; }
+  input:focus-visible, button:focus-visible { outline: 3px solid #3b82f6; outline-offset: 3px; }
+  .discovery-note { margin-top: .75rem; font-size: .875rem; }
+  #discovery-status:not(:empty) { margin-top: 1rem; }
+  #discovery-results { list-style: none; padding: 0; }
+  #discovery-results :global(li) { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #737373; }
+  #discovery-results :global(span) { display: block; font-size: .75rem; margin-bottom: .25rem; }
+  #discovery-results :global(a) { font-weight: 700; text-decoration: underline; overflow-wrap: anywhere; }
+  #discovery-results :global(p) { margin-top: .5rem; font-size: .875rem; overflow-wrap: anywhere; }
+  @media (max-width: 600px) { .discovery-controls { flex-direction: column; } .discovery { padding: 1rem; } }
+</style>

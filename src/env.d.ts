@@ -3,6 +3,8 @@
 
 // Cloudflare の bindings / secrets。ローカルは .dev.vars、本番は Cloudflare の secret から入る
 interface CloudflareEnv {
+  AI?: import('./lib/discovery').DiscoveryBindings['AI'];
+  DISCOVERY_RATE_LIMITER?: import('./lib/discovery').DiscoveryBindings['DISCOVERY_RATE_LIMITER'];
   ASTRO_DB_REMOTE_URL: string;
   ASTRO_DB_APP_TOKEN?: string;
 }

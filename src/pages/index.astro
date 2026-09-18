@@ -1,5 +1,6 @@
 ---
 import { type CollectionEntry, getCollection } from 'astro:content';
+import ContentDiscovery from '../components/ContentDiscovery.astro';
 import Layout from '../components/Layout.astro';
 import Materials from '../components/Materials.astro';
 import PoemList from '../components/PoemList.astro';
@@ -103,6 +104,7 @@ const blogEntries: BlogEntry[] = allBlogEntries.map(
       </a>
     </p>
   </section>
+  <ContentDiscovery />
   <h2 class="text-2xl font-bold mb-8">最近の投稿記事</h2>
   <section class="mb-8">
     <PostList items={blogEntries.slice(0, 4)} />

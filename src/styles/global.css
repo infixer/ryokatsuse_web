@@ -8,7 +8,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-noto-sans: "Noto Sans JP", sans-serif;
+  --font-noto-sans: var(--font-noto-sans-jp);
 }
 
 /* v3 互換: border のデフォルト色 (v4 は currentColor) */

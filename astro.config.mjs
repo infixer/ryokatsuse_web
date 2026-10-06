@@ -68,7 +68,10 @@ export default defineConfig({
       provider: fontProviders.google(),
       name: 'Noto Sans JP',
       cssVariable: '--font-noto-sans-jp',
-      weights: ['400', '500', '700'],
+      // 可変フォントで本文・中太・太字を共有し、CJKの定義の重複を避ける
+      weights: ['400 700'],
+      styles: ['normal'],
+      display: 'swap',
       fallbacks: ['Hiragino Sans', 'Yu Gothic', 'sans-serif'],
       // CJKフォントではsize-adjustが約200%に誤算出されFOUT時に巨大表示になるため無効化
       optimizedFallbacks: false,

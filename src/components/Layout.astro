@@ -70,7 +70,8 @@ declare global {
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <meta name="generator" content={Astro.generator} />
     <link rel="alternate" href="/posts-feed.xml" type="application/rss+xml" />
-    <Font cssVariable='--font-noto-sans-jp' preload />
+    <!-- CJKの全サブセットを先読みせず、使用する文字のフォントだけ取得する -->
+    <Font cssVariable='--font-noto-sans-jp' />
 
     <!-- Primary Meta Tags -->
     <title>{title}</title>

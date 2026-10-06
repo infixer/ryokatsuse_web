@@ -5,6 +5,8 @@ import react from '@astrojs/react';
 import mdx from '@astrojs/mdx';
 import cloudflare from '@astrojs/cloudflare';
 import { markdownComponents } from './src/integrations/markdown-components';
+import { fileURLToPath } from 'node:url';
+import { responsiveMarkdownImages } from './src/integrations/responsive-markdown-images';
 
 // https://astro.build/config
 export default defineConfig({
@@ -68,13 +70,19 @@ export default defineConfig({
       provider: fontProviders.google(),
       name: 'Noto Sans JP',
       cssVariable: '--font-noto-sans-jp',
-      weights: ['400', '500', '700'],
+      // 可変フォントで本文・中太・太字を共有し、CJKの定義の重複を避ける
+      weights: ['400 700'],
+      styles: ['normal'],
+      display: 'swap',
       fallbacks: ['Hiragino Sans', 'Yu Gothic', 'sans-serif'],
       // CJKフォントではsize-adjustが約200%に誤算出されFOUT時に巨大表示になるため無効化
       optimizedFallbacks: false,
     },
   ],
   markdown: {
+    remarkPlugins: [[responsiveMarkdownImages, {
+      publicDir: fileURLToPath(new URL('./public/', import.meta.url)),
+    }]],
     syntaxHighlight: 'shiki',
     shikiConfig: {
       theme: 'github-dark',

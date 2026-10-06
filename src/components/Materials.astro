@@ -6,6 +6,7 @@ import OgpCard from './OgpCard.astro';
 // 新しいものが上に来るように並べ替える（データは時系列順）
 const sortedTalks = [...talks].sort((a, b) => b.date.localeCompare(a.date));
 
+// このコンポーネントを使う公開ページは静的生成し、OGP取得をビルド時に完了させる
 const [talkCards, workCards] = await Promise.all([
   fetchOgpAll(sortedTalks),
   fetchOgpAll(works),

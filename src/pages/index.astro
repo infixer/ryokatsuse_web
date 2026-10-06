@@ -1,4 +1,6 @@
 ---
+export const prerender = true;
+
 import { type CollectionEntry, getCollection } from 'astro:content';
 import Layout from '../components/Layout.astro';
 import Materials from '../components/Materials.astro';
@@ -32,11 +34,6 @@ const latestPoems = (await getCollection('poems'))
 
 const description = 'JavaScriptエンジニア。インターフェースデザインが好き。';
 
-// OGP取得を含むページなのでCDNキャッシュを効かせる
-Astro.response.headers.set(
-  'Cache-Control',
-  'public, max-age=0, s-maxage=600, stale-while-revalidate=86400',
-);
 
 // Astroコンテンツコレクションの型に対応
 type BlogEntry = {
@@ -47,7 +44,7 @@ type BlogEntry = {
   description?: string;
 };
 
-const blogEntries: BlogEntry[] = allBlogEntries.map(
+const blogEntries: BlogEntry[] = allBlogEntries.slice(0, 4).map(
   (post: CollectionEntry<'blog'>) => {
     const parts = post.id.split('/');
     const slug =
@@ -105,7 +102,7 @@ const blogEntries: BlogEntry[] = allBlogEntries.map(
   </section>
   <h2 class="text-2xl font-bold mb-8">最近の投稿記事</h2>
   <section class="mb-8">
-    <PostList items={blogEntries.slice(0, 4)} />
+    <PostList items={blogEntries} />
   </section>
   <div><a class="text-black dark:text-white underline hover:hover:no-underline" href="/blog">すべての記事一覧</a></div>
 

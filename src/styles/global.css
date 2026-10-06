@@ -1,14 +1,11 @@
 @import "tailwindcss";
 @import "./post.css";
 
-/* PrismJSのデフォルトテーマをインポート */
-@import "prismjs/themes/prism-tomorrow.css";
-
 /* darkMode: 'class' を v4 で再現 */
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-noto-sans: "Noto Sans JP", sans-serif;
+  --font-noto-sans: var(--font-noto-sans-jp);
 }
 
 /* v3 互換: border のデフォルト色 (v4 は currentColor) */
@@ -118,80 +115,4 @@ pre > code::after {
 .post pre > code::before,
 .post pre > code::after {
   content: none;
-}
-
-/* PrismJSのシンタックスハイライト用カスタムスタイル */
-.token.comment,
-.token.prolog,
-.token.doctype,
-.token.cdata {
-  color: #8292a2;
-}
-
-.token.punctuation {
-  color: #f8f8f2;
-}
-
-.token.namespace {
-  opacity: 0.7;
-}
-
-.token.property,
-.token.tag,
-.token.constant,
-.token.symbol,
-.token.deleted {
-  color: #f92672;
-}
-
-.token.boolean,
-.token.number {
-  color: #ae81ff;
-}
-
-.token.selector,
-.token.attr-name,
-.token.string,
-.token.char,
-.token.builtin,
-.token.inserted {
-  color: #a6e22e;
-}
-
-.token.operator,
-.token.entity,
-.token.url,
-.language-css .token.string,
-.style .token.string,
-.token.variable {
-  color: #f8f8f2;
-}
-
-.token.atrule,
-.token.attr-value,
-.token.function,
-.token.class-name {
-  color: #e6db74;
-}
-
-.token.keyword {
-  color: #66d9ef;
-}
-
-.token.regex,
-.token.important {
-  color: #fd971f;
-}
-
-.token.important,
-.token.bold {
-  font-weight: bold;
-}
-
-.token.italic {
-  font-style: italic;
-}
-
-.token.entity {
-  cursor: help;
 }

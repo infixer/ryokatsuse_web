@@ -74,6 +74,7 @@
 
   img {
     @apply rounded-md;
+    height: auto;
   }
 
   table {

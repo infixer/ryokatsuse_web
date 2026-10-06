@@ -5,6 +5,8 @@ import react from '@astrojs/react';
 import mdx from '@astrojs/mdx';
 import cloudflare from '@astrojs/cloudflare';
 import { markdownComponents } from './src/integrations/markdown-components';
+import { fileURLToPath } from 'node:url';
+import { responsiveMarkdownImages } from './src/integrations/responsive-markdown-images';
 
 // https://astro.build/config
 export default defineConfig({
@@ -78,6 +80,9 @@ export default defineConfig({
     },
   ],
   markdown: {
+    remarkPlugins: [[responsiveMarkdownImages, {
+      publicDir: fileURLToPath(new URL('./public/', import.meta.url)),
+    }]],
     syntaxHighlight: 'shiki',
     shikiConfig: {
       theme: 'github-dark',

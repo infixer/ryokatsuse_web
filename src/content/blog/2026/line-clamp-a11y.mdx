@@ -1,0 +1,124 @@
+---
+title: line-clampしたときに切り捨てた文章のアクセシビリティについて
+publishDate: "2026-10-09"
+references:
+  - title: "w3c/csswg-drafts commit 1dafa60"
+    url: "https://github.com/w3c/csswg-drafts/commit/1dafa60598a1d313471673f7e06a8e4c9f94646f"
+  - title: "w3c/csswg-drafts#12859"
+    url: "https://github.com/w3c/csswg-drafts/issues/12859"
+  - title: "ARIA WG 議事録（2026-08-20）"
+    url: "https://www.w3.org/2026/08/20-aria-minutes.html"
+  - title: "w3c/css-aam#29"
+    url: "https://github.com/w3c/css-aam/issues/29"
+  - title: "TAG Design Review #1287: CSS line-clamp"
+    url: "https://github.com/w3ctag/design-reviews/issues/1287"
+  - title: "mozilla/standards-positions#984"
+    url: "https://github.com/mozilla/standards-positions/issues/984"
+---
+
+import LinkCard from '../../../components/LinkCard.astro';
+
+3点リーダーなどを実装するときにCSSの`line-clamp`を使うことがあります。この実装で、長い文章を指定した行数で切り捨てることができます。こういった実装をしたときにス、切り捨てた文章はクリーンリーダーとしてどう読まれるのでしょうか？
+
+答えは見た目からは消えますが、アクセシビリティツリーとフォーカス順には残ります。
+
+実は2026年2月のCSSWGの決議では「スクリーンリーダーからも隠す」という方向でした。その後ARIA WGなどから反論があり、「スクリーンリーダーには読ませる」に変わっています。ただし、これはあくまでデフォルトの挙動の話で、「隠したい場合にどうするか」は別の課題として残っています。
+
+
+## 仕様の変更点
+
+変更は以下のコミットです。
+
+<LinkCard url="https://github.com/w3c/csswg-drafts/commit/1dafa60598a1d313471673f7e06a8e4c9f94646f" />
+
+2026年10月8日のコミットで、本文には「少なくともデフォルトでは、アクセシビリティツリーからもフォーカス可能性からも除かない」と書かれています。
+
+変更前後を整理すると、以下のようになります。
+
+| 観点 | 変更前 | 変更後 |
+| --- | --- | --- |
+| clamp 点以降の扱い | invisible box（`visibility: hidden` 相当） | 新用語 visually suppressed（`overflow: clip` 相当） |
+| 描画 | されない | されない |
+| レイアウト・スクロール可能領域 | 影響しない（ink overflow 扱い） | 影響しない（ink overflow 扱い） |
+| アクセシビリティツリー | 露出しない | **露出する** |
+| Tab キーでのフォーカス | 不可 | **可能** |
+
+なお、`continue: discard`のほうは従来どおり`display: none`的な挙動で、今回の変更の対象外のようです。
+
+## なぜそうなったか
+
+議論の場は以下のissueです。
+
+<LinkCard url="https://github.com/w3c/csswg-drafts/issues/12859" />
+
+「見えないなら読ませない」から始まり、当事者側の声で「読ませる」に戻った、という流れになったようです。
+
+{/* | 日付 | 出来事 |
+| --- | --- |
+| 2025-09-26 | Florian Rivoal が「`visibility: hidden` と同様に AT からも隠すべきでは」と issue を起票 |
+| 2026-02-25 | [CSSWG 決議](https://lists.w3.org/Archives/Public/public-css-archive/2026Feb/0862.html)：「clamp された内容は画面からもスクリーンリーダーからも隠す」 |
+| 2026-02-25 | Apple の James Craig が「200% の文字サイズ＋clamp で読めなくなる VoiceOver・HoverText 利用者が困る」と反論 |
+| 2026-03-13 | James Craig が、[文字サイズ次第で読める範囲が変わる問題を具体例で説明](https://lists.w3.org/Archives/Public/public-css-archive/2026Mar/0456.html) |
+| 2026-08-20 | [ARIA WG](https://www.w3.org/2026/08/20-aria-minutes.html) が「全文が読まれる現状の挙動は正しく、維持すべき」で合意。隠す手段は別課題に（[css-aam#29](https://github.com/w3c/css-aam/issues/29)） |
+| 2026-10-08 | Editor's Draft を visually suppressed に変更（AT に露出・フォーカス可） | */}
+
+決め手になった論点は2つあります。
+
+1. clampされる位置はフォントサイズやウィンドウ幅で変わるので、文字を大きくしているロービジョンの人ほど読める量が減ってしまう
+2. 全盲の人は自分の画面幅を意識していないので、日によって末尾が読めたり読めなかったりする
+
+見た目の都合で決まる「どこで切るか」が、そのまま支援技術に届く情報量を左右してしまうのは確かにおかしな話です。
+
+一方で、反対側の懸念も消えたわけではありません。例えば500行のうち3行だけを見せる抜粋一覧で全文を出すと、一覧ページが長文の塊になってしまいます。ARIA WGでも、スクリーンリーダー利用者のMatt Kingさんが「どこが見えていてどこが切られているか分からない」という問題を指摘しています。
+
+現時点では、clampされた内容はどのブラウザでも支援技術に全文が渡っています。
+
+つまり今回の仕様変更は今の挙動を追認したもので、開発者から見た動作がすぐに変わるわけではありません。
+
+
+## 何を意識するか
+
+`line-clamp`は「見た目を整えるための省略」に使い、「情報を絞るための省略」には使わない、ということになりそうかなと思います。
+
+- **カードの見出しや説明文の高さをそろえる**
+  - `line-clamp`を使用すると良さそうです。全文が読み上げられるのは、ほとんどの場合むしろ望ましい挙動です。ただ、日本語は文末で意味が決まるので、「〜をご利用いただけ…」のように切れると「ます」なのか「ません」なのか分からなくなってしまいます。そもそもデザインとして説明文が本当にカードに必要かは、一度話し合ってみると良さそうです。
+- **clampされる範囲にリンクやボタンを置かない**
+  - 見えないのにTabでフォーカスが入り、フォーカスが見えない状態になりえるのでひょっとするとWCAGに適合しないケースになるかもしれません。
+- **「続きを読む」型のUI**
+  - 展開前の本文はDOM側で制御すると良さそうです。（`hidden`属性や`<details>`など）。`line-clamp`だと支援技術の利用者には最初から全文が届いてしまい、「続きを読む」ボタンが意味をなさなくなります
+
+「続きを読む」の例を簡単に書くと、以下のような違いになります。
+
+```html
+<!-- line-clamp：見た目は3行だが、支援技術には全文とリンクが届く -->
+<div class="clamp">
+  <p>本文のテキスト。<a href="/detail">詳細</a></p>
+</div>
+<button type="button">続きを読む</button>
+
+<!-- DOMで出し分け：見た目と支援技術に届く内容が一致する -->
+<p>冒頭のテキスト。</p>
+<div id="more" hidden>
+  <p>続きのテキスト。<a href="/detail">詳細</a></p>
+</div>
+<button type="button" aria-expanded="false" aria-controls="more">続きを読む</button>
+```
+
+```css
+.clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+```
+
+リンクにTabで移動すると、ブラウザによってはボックスの中身がスクロールして隠れていた行が見えるようになり、表示が崩れます。どちらにしても、見えている3行とは別の場所にフォーカスがある状態です。
+
+
+## まとめ
+
+`line-clamp`で省略されたテキストは、見た目からは消えてもスクリーンリーダーには読まれます。これは今の各ブラウザの挙動でもあり、今回の仕様変更でEditor's Draftもそれに揃いました。ただし、今回変わったのはあくまでEditor's Draftで、議論はまだ続いています。
+
+一方で、支援技術の利用者にも省略した状態で届けたいケースもあります。そのためにスクリーンリーダーからも隠す仕組みをどうするかは、今後の課題として議論が続いているようです。

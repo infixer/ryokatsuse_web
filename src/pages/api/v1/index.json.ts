@@ -1,5 +1,5 @@
-import type { APIRoute } from 'astro';
 import { API_VERSION, type ApiIndex } from '@infixer/core';
+import type { APIRoute } from 'astro';
 import { json, loadEntries, loadTalks, loadWorks } from '../../../lib/api-v1';
 
 export const prerender = true;

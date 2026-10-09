@@ -1,5 +1,5 @@
-import type { AstroIntegration } from 'astro';
 import { fileURLToPath } from 'node:url';
+import type { AstroIntegration } from 'astro';
 
 // コンポーネントパス
 const COMPONENTS_PATH = fileURLToPath(

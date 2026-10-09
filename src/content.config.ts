@@ -1,5 +1,3 @@
-import { defineCollection } from 'astro:content';
-import { file, glob } from 'astro/loaders';
 import {
   blogSchema,
   parseOrderedYaml,
@@ -8,6 +6,8 @@ import {
   withOrder,
   workSchema,
 } from '@infixer/core/schema';
+import { file, glob } from 'astro/loaders';
+import { defineCollection } from 'astro:content';
 
 // スキーマは CLI（infixer validate）と共有するため @infixer/core に置いている
 const blogCollection = defineCollection({

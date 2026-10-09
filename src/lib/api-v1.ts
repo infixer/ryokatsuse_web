@@ -1,4 +1,3 @@
-import { getCollection } from 'astro:content';
 import {
   type CollectionName,
   type Entry,
@@ -7,6 +6,7 @@ import {
   toEntry,
   type WorkItem,
 } from '@infixer/core';
+import { getCollection } from 'astro:content';
 
 /**
  * CLI（infixer --remote）向け `/api/v1/*` の共通処理。

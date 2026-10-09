@@ -58,15 +58,6 @@ import Cite from '../../../components/Cite.astro';
 
 「見えないなら読ませない」から始まり、当事者側の声で「読ませる」に戻った、という流れになったようです<Cite id="issue" />。
 
-{/* | 日付 | 出来事 |
-| --- | --- |
-| 2025-09-26 | Florian Rivoal が「`visibility: hidden` と同様に AT からも隠すべきでは」と issue を起票 |
-| 2026-02-25 | [CSSWG 決議](https://lists.w3.org/Archives/Public/public-css-archive/2026Feb/0862.html)：「clamp された内容は画面からもスクリーンリーダーからも隠す」 |
-| 2026-02-25 | Apple の James Craig が「200% の文字サイズ＋clamp で読めなくなる VoiceOver・HoverText 利用者が困る」と反論 |
-| 2026-03-13 | James Craig が、[文字サイズ次第で読める範囲が変わる問題を具体例で説明](https://lists.w3.org/Archives/Public/public-css-archive/2026Mar/0456.html) |
-| 2026-08-20 | [ARIA WG](https://www.w3.org/2026/08/20-aria-minutes.html) が「全文が読まれる現状の挙動は正しく、維持すべき」で合意。隠す手段は別課題に（[css-aam#29](https://github.com/w3c/css-aam/issues/29)） |
-| 2026-10-08 | Editor's Draft を visually suppressed に変更（AT に露出・フォーカス可） | */}
-
 決め手になった論点は2つあります。
 
 1. clampされる位置はフォントサイズやウィンドウ幅で変わるので、文字を大きくしているロービジョンの人ほど読める量が減ってしまう
@@ -76,7 +67,7 @@ import Cite from '../../../components/Cite.astro';
 
 一方で、反対側の懸念も消えたわけではありません。例えば500行のうち3行だけを見せる抜粋一覧で全文を出すと、一覧ページが長文の塊になってしまいます。ARIA WGでも、スクリーンリーダー利用者のMatt Kingさんが「どこが見えていてどこが切られているか分からない」という問題を指摘しています<Cite id="aria-wg" />。
 
-現時点では、clampされた内容はどのブラウザでも支援技術に全文が渡っています<Cite id="aria-wg" />。
+現時点では、clampされた内容はどのブラウザでも支援技術に全文が渡っています。
 
 つまり今回の仕様変更は今の挙動を追認したもので、開発者から見た動作がすぐに変わるわけではありません。
 

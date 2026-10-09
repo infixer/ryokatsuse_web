@@ -18,20 +18,12 @@ references:
     title: "w3c/css-aam#29"
     url: "https://github.com/w3c/css-aam/issues/29"
     description: "overflow: clip と line-clamp で隠れた内容を支援技術にどう届けるかの議論"
-  - id: tag
-    title: "TAG Design Review #1287: CSS line-clamp"
-    url: "https://github.com/w3ctag/design-reviews/issues/1287"
-    description: "標準の line-clamp の設計レビュー。各ブラウザの実装状況もまとまっている"
-  - id: mozilla
-    title: "mozilla/standards-positions#984"
-    url: "https://github.com/mozilla/standards-positions/issues/984"
-    description: "line-clamp に対する Mozilla の立場の議論"
 ---
 
 import LinkCard from '../../../components/LinkCard.astro';
 import Cite from '../../../components/Cite.astro';
 
-3点リーダーなどを実装するときにCSSの`line-clamp`を使うことがあります。この実装で、長い文章を指定した行数で切り捨てることができます。こういった実装をしたときにス、切り捨てた文章はクリーンリーダーとしてどう読まれるのでしょうか？
+3点リーダーなどを実装するときにCSSの`line-clamp`を使うことがあります。この実装で、長い文章を指定した行数で切り捨てることができます。こういった実装をしたときに、切り捨てた文章はスクリーンリーダーとしてどう読まれるのでしょうか？
 
 答えは見た目からは消えますが、アクセシビリティツリーとフォーカス順には残ります。
 

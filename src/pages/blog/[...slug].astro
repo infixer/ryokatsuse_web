@@ -110,7 +110,9 @@ const ogImageURLAsset = assets.find((asset) => {
 </Layout>
 
 <script>
+  import { registerCodeCopy } from '../../components/CodeCopy';
   import { registerFavoriteButton } from '../../components/FavoriteButton';
+  registerCodeCopy();
   registerFavoriteButton();
 
   // ヘッダーの表示/非表示に合わせてプログレスバーの位置を調整

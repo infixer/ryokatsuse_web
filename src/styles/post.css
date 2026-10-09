@@ -1,8 +1,16 @@
 .post {
   @apply space-y-6;
 
-  * + :is(h2, hr, pre, figure, iframe, .twitter-tweet-rendered),
-  :is(hr, pre, figure, iframe, :is(.twitter-tweet-rendered) + script) + * {
+  * + :is(h2, hr, pre, .code-block, figure, iframe, .twitter-tweet-rendered),
+  :is(
+      hr,
+      pre,
+      .code-block,
+      figure,
+      iframe,
+      :is(.twitter-tweet-rendered) + script
+    )
+    + :not(.code-copy-button) {
     @apply !mt-10;
   }
 

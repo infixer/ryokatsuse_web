@@ -50,6 +50,9 @@ const { Content } = await render(entry);
 </Layout>
 
 <script>
+  import { registerCodeCopy } from '../../components/CodeCopy';
+  registerCodeCopy();
+
   // 縦中横（tate-chu-yoko）: 3文字までの数字を正立させる。
   // text-combine-upright は要素単位でしか効かず、桁数で自動判定する
   // `digits` の値はどのブラウザも未実装なので、ここで数字だけを包む。

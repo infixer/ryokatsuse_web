@@ -116,3 +116,49 @@ pre > code::after {
 .post pre > code::after {
   content: none;
 }
+
+/* コードブロックのコピーボタン（src/integrations/code-copy-button.ts） */
+.code-block {
+  position: relative;
+  margin: 1rem 0;
+}
+.code-block > pre {
+  margin: 0;
+}
+.code-copy-button {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: grid;
+  place-items: center;
+  padding: 0.5rem;
+  color: var(--color-gray-400);
+  /* 横スクロールしたコードが透けないよう、コードブロック（github-dark）と同じ背景にする */
+  background-color: #24292e;
+  border: 1px solid var(--color-gray-600);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+.code-copy-button:hover {
+  color: var(--color-white);
+  border-color: var(--color-gray-400);
+}
+/* インライン要素のままだとベースライン分の隙間でアイコンが下にずれる */
+.code-copy-button svg {
+  display: block;
+}
+.code-copy-button .code-copied-icon,
+.code-copy-button[data-copied] .code-copy-icon {
+  display: none;
+}
+.code-copy-button[data-copied] .code-copied-icon {
+  display: block;
+  color: var(--color-green-400);
+}
+.code-copy-button:focus-visible {
+  outline: 2px solid var(--color-blue-500);
+  outline-offset: 2px;
+}

@@ -7,6 +7,7 @@ import cloudflare from '@astrojs/cloudflare';
 import { markdownComponents } from './src/integrations/markdown-components';
 import { fileURLToPath } from 'node:url';
 import { responsiveMarkdownImages } from './src/integrations/responsive-markdown-images';
+import { codeCopyButton } from './src/integrations/code-copy-button';
 
 // https://astro.build/config
 export default defineConfig({
@@ -86,6 +87,7 @@ export default defineConfig({
     syntaxHighlight: 'shiki',
     shikiConfig: {
       theme: 'github-dark',
+      transformers: [codeCopyButton()],
     },
   },
 });

@@ -1,0 +1,35 @@
+---
+// 本文中の参照番号。frontmatter の references の並び順で [1], [2]... と振り、参照一覧へリンクする
+interface Props {
+  id: string;
+}
+
+const { id } = Astro.props;
+const references = Astro.locals.references ?? [];
+const index = references.findIndex((reference) => reference.id === id);
+const message = `<Cite id="${id}" /> に対応する references がありません`;
+
+// ビルドでは止める。dev はストリーミング中に throw すると画面が真っ白になるので、本文に警告を出す
+if (index === -1 && !import.meta.env.DEV) {
+  throw new Error(message);
+}
+
+const n = index + 1;
+const reference = references[index];
+
+// 同じ参照を複数回使ったときに id が重複しないよう、2回目以降は連番を付ける
+const counts = (Astro.locals.citeCounts ??= {});
+const count = (counts[id] = (counts[id] ?? 0) + 1);
+const anchorId = count === 1 ? `cite-${n}` : `cite-${n}-${count}`;
+---
+
+{reference ? (
+  <sup class="cite"><a
+    href={`#ref-${n}`}
+    id={anchorId}
+    title={reference.title ?? reference.url}
+    class="scroll-mt-20 px-0.5 font-normal no-underline! text-sky-700! dark:text-sky-400! hover:underline!"
+  >[<span class="sr-only">参照</span>{n}]</a></sup>
+) : (
+  <sup class="cite text-red-600 dark:text-red-400">[{message}]</sup>
+)}

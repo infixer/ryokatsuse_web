@@ -1,14 +1,13 @@
 ---
-type Reference = {
-  title?: string;
-  url: string;
-};
+import type { BlogReference } from '@infixer/core/schema';
 
 interface Props {
-  references?: Reference[];
+  references?: BlogReference[];
+  // 本文の <Cite> から参照されている id。参照元へ戻るリンクを出すのに使う
+  citedIds?: Set<string>;
 }
 
-const { references = [] } = Astro.props;
+const { references = [], citedIds = new Set() } = Astro.props;
 ---
 
 {references.length > 0 && (
@@ -17,20 +16,36 @@ const { references = [] } = Astro.props;
       参照
     </h2>
     <div class="px-4 py-2">
-      <ul class="list-disc pl-5">
-        {references.map((reference) => (
-          <li class="mb-2 break-all">
-            <a
-              href={reference.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="text-black dark:text-white no-underline border-b border-transparent hover:border-gray-300 dark:hover:border-gray-500 transition-colors"
-            >
-              {reference.title ?? reference.url}
-            </a>
-          </li>
-        ))}
-      </ul>
+      <ol class="list-decimal pl-6">
+        {references.map((reference, index) => {
+          const n = index + 1;
+          const cited = reference.id !== undefined && citedIds.has(reference.id);
+          return (
+            <li id={`ref-${n}`} class="mb-2 break-all scroll-mt-20 target:bg-yellow-100 dark:target:bg-yellow-900/40 rounded">
+              <a
+                href={reference.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-black dark:text-white no-underline border-b border-transparent hover:border-gray-300 dark:hover:border-gray-500 transition-colors"
+              >
+                {reference.title ?? reference.url}
+              </a>
+              {cited && (
+                <a
+                  href={`#cite-${n}`}
+                  class="ml-1 text-sm text-gray-600 dark:text-gray-300 no-underline hover:underline"
+                >
+                  <span aria-hidden="true">↩</span>
+                  <span class="sr-only">本文の参照{n}へ戻る</span>
+                </a>
+              )}
+              {reference.description && (
+                <p class="text-sm text-gray-700 dark:text-gray-300 break-normal">{reference.description}</p>
+              )}
+            </li>
+          );
+        })}
+      </ol>
     </div>
   </section>
 )}

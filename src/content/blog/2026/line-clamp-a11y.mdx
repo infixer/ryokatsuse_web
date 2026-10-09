@@ -2,21 +2,34 @@
 title: line-clampしたときに切り捨てた文章のアクセシビリティについて
 publishDate: "2026-10-09"
 references:
-  - title: "w3c/csswg-drafts commit 1dafa60"
+  - id: commit
+    title: "w3c/csswg-drafts commit 1dafa60"
     url: "https://github.com/w3c/csswg-drafts/commit/1dafa60598a1d313471673f7e06a8e4c9f94646f"
-  - title: "w3c/csswg-drafts#12859"
+    description: "clampされた内容を「見た目だけ消す」に変えた仕様のコミット"
+  - id: issue
+    title: "w3c/csswg-drafts#12859"
     url: "https://github.com/w3c/csswg-drafts/issues/12859"
-  - title: "ARIA WG 議事録（2026-08-20）"
+    description: "clampされた内容を支援技術からも隠すかどうかの議論の本体"
+  - id: aria-wg
+    title: "ARIA WG 議事録（2026-08-20）"
     url: "https://www.w3.org/2026/08/20-aria-minutes.html"
-  - title: "w3c/css-aam#29"
+    description: "全文が読まれる現状の挙動を維持すべきと合意した回の議事録"
+  - id: css-aam
+    title: "w3c/css-aam#29"
     url: "https://github.com/w3c/css-aam/issues/29"
-  - title: "TAG Design Review #1287: CSS line-clamp"
+    description: "overflow: clip と line-clamp で隠れた内容を支援技術にどう届けるかの議論"
+  - id: tag
+    title: "TAG Design Review #1287: CSS line-clamp"
     url: "https://github.com/w3ctag/design-reviews/issues/1287"
-  - title: "mozilla/standards-positions#984"
+    description: "標準の line-clamp の設計レビュー。各ブラウザの実装状況もまとまっている"
+  - id: mozilla
+    title: "mozilla/standards-positions#984"
     url: "https://github.com/mozilla/standards-positions/issues/984"
+    description: "line-clamp に対する Mozilla の立場の議論"
 ---
 
 import LinkCard from '../../../components/LinkCard.astro';
+import Cite from '../../../components/Cite.astro';
 
 3点リーダーなどを実装するときにCSSの`line-clamp`を使うことがあります。この実装で、長い文章を指定した行数で切り捨てることができます。こういった実装をしたときにス、切り捨てた文章はクリーンリーダーとしてどう読まれるのでしょうか？
 
@@ -31,7 +44,7 @@ import LinkCard from '../../../components/LinkCard.astro';
 
 <LinkCard url="https://github.com/w3c/csswg-drafts/commit/1dafa60598a1d313471673f7e06a8e4c9f94646f" />
 
-2026年10月8日のコミットで、本文には「少なくともデフォルトでは、アクセシビリティツリーからもフォーカス可能性からも除かない」と書かれています。
+2026年10月8日のコミットで、本文には「少なくともデフォルトでは、アクセシビリティツリーからもフォーカス可能性からも除かない」と書かれています<Cite id="commit" />。
 
 変更前後を整理すると、以下のようになります。
 
@@ -51,7 +64,7 @@ import LinkCard from '../../../components/LinkCard.astro';
 
 <LinkCard url="https://github.com/w3c/csswg-drafts/issues/12859" />
 
-「見えないなら読ませない」から始まり、当事者側の声で「読ませる」に戻った、という流れになったようです。
+「見えないなら読ませない」から始まり、当事者側の声で「読ませる」に戻った、という流れになったようです<Cite id="issue" />。
 
 {/* | 日付 | 出来事 |
 | --- | --- |
@@ -69,9 +82,9 @@ import LinkCard from '../../../components/LinkCard.astro';
 
 見た目の都合で決まる「どこで切るか」が、そのまま支援技術に届く情報量を左右してしまうのは確かにおかしな話です。
 
-一方で、反対側の懸念も消えたわけではありません。例えば500行のうち3行だけを見せる抜粋一覧で全文を出すと、一覧ページが長文の塊になってしまいます。ARIA WGでも、スクリーンリーダー利用者のMatt Kingさんが「どこが見えていてどこが切られているか分からない」という問題を指摘しています。
+一方で、反対側の懸念も消えたわけではありません。例えば500行のうち3行だけを見せる抜粋一覧で全文を出すと、一覧ページが長文の塊になってしまいます。ARIA WGでも、スクリーンリーダー利用者のMatt Kingさんが「どこが見えていてどこが切られているか分からない」という問題を指摘しています<Cite id="aria-wg" />。
 
-現時点では、clampされた内容はどのブラウザでも支援技術に全文が渡っています。
+現時点では、clampされた内容はどのブラウザでも支援技術に全文が渡っています<Cite id="aria-wg" />。
 
 つまり今回の仕様変更は今の挙動を追認したもので、開発者から見た動作がすぐに変わるわけではありません。
 
@@ -121,4 +134,4 @@ import LinkCard from '../../../components/LinkCard.astro';
 
 `line-clamp`で省略されたテキストは、見た目からは消えてもスクリーンリーダーには読まれます。これは今の各ブラウザの挙動でもあり、今回の仕様変更でEditor's Draftもそれに揃いました。ただし、今回変わったのはあくまでEditor's Draftで、議論はまだ続いています。
 
-一方で、支援技術の利用者にも省略した状態で届けたいケースもあります。そのためにスクリーンリーダーからも隠す仕組みをどうするかは、今後の課題として議論が続いているようです。
+一方で、支援技術の利用者にも省略した状態で届けたいケースもあります。そのためにスクリーンリーダーからも隠す仕組みをどうするかは、今後の課題として議論が続いているようです<Cite id="css-aam" />。

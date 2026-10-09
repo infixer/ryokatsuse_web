@@ -12,6 +12,12 @@ declare module 'cloudflare:workers' {
 }
 
 declare namespace App {
+  interface Locals {
+    // 記事ページが本文の描画前に入れておき、<Cite> が番号を引くのに使う
+    references?: import('@infixer/core/schema').BlogReference[];
+    citeCounts?: Record<string, number>;
+  }
+
   interface SessionData {
     counter: number;
     lastVisit: Date;

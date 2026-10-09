@@ -16,11 +16,22 @@ export const blogSchema = z.object({
   references: z
     .array(
       z.object({
+        // 本文の <Cite id="..." /> から参照するためのキー
+        id: z.string().optional(),
         title: z.string().optional(),
         url: z.string().url(),
+        // 参照一覧に添える簡単な説明
+        description: z.string().optional(),
       }),
     )
-    .optional(),
+    .optional()
+    .refine(
+      (refs) => {
+        const ids = (refs ?? []).flatMap((ref) => (ref.id ? [ref.id] : []));
+        return new Set(ids).size === ids.length;
+      },
+      { message: 'references の id が重複しています' },
+    ),
 });
 
 export const poemSchema = z.object({
@@ -68,6 +79,7 @@ export function parseOrderedYaml(text: string): Record<string, unknown>[] {
 }
 
 export type BlogData = z.infer<typeof blogSchema>;
+export type BlogReference = NonNullable<BlogData['references']>[number];
 export type PoemData = z.infer<typeof poemSchema>;
 export type TalkScope = (typeof talkScopes)[number];
 export type Talk = z.infer<typeof talkSchema>;

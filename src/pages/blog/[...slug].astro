@@ -18,6 +18,12 @@ export async function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
+// <Cite> が番号を引けるよう、本文を描画する前に参照一覧を渡しておく
+Astro.locals.references = entry.data.references ?? [];
+Astro.locals.citeCounts = {};
+const citedIds = new Set(
+  [...(entry.body ?? '').matchAll(/<Cite\s+id=["']([^"']+)["']/g)].map((m) => m[1]),
+);
 const { Content, headings } = await render(entry);
 
 const assetModules = import.meta.glob<{ default: ImageMetadata }>(
@@ -104,7 +110,7 @@ const ogImageURLAsset = assets.find((asset) => {
     <div class="container post">
       <Content />
     </div>
-    <References references={entry.data.references} />
+    <References references={entry.data.references} citedIds={citedIds} />
     <ShareButtons title={entry.data.title} url={new URL(Astro.url.pathname, Astro.site).toString()} />
   </article>
 </Layout>

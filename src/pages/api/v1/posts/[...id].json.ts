@@ -1,5 +1,5 @@
-import type { APIRoute, GetStaticPaths } from 'astro';
 import type { Entry } from '@infixer/core';
+import type { APIRoute, GetStaticPaths } from 'astro';
 import { json, loadEntries } from '../../../../lib/api-v1';
 
 export const prerender = true;

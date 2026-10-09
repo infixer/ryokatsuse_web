@@ -1,4 +1,4 @@
-import type { Element } from 'hast';
+import type { Element, ElementContent } from 'hast';
 import type { ShikiTransformer } from 'shiki';
 
 const svgIcon = (className: string, children: Element[]): Element => ({
@@ -51,7 +51,8 @@ export function codeCopyButton(): ShikiTransformer {
           tagName: 'div',
           properties: { class: 'code-block' },
           children: [
-            ...root.children,
+            // Shiki の root の子は <pre> だけで、doctype は含まれない
+            ...(root.children as ElementContent[]),
             {
               type: 'element',
               tagName: 'button',

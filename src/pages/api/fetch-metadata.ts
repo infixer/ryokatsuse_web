@@ -138,7 +138,7 @@ export const GET: APIRoute = async ({ url }: APIContext) => {
 function resolveUrl(relativeUrl: string, baseUrl: string): string {
   try {
     return new URL(relativeUrl, baseUrl).toString();
-  } catch (error) {
+  } catch {
     return relativeUrl;
   }
 }

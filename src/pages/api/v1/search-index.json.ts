@@ -1,5 +1,5 @@
-import type { APIRoute } from 'astro';
 import { toSearchIndexItem } from '@infixer/core';
+import type { APIRoute } from 'astro';
 import { json, loadEntries } from '../../../lib/api-v1';
 
 export const prerender = true;

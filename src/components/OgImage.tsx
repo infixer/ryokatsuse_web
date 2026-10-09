@@ -1,8 +1,8 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import { Resvg } from '@resvg/resvg-js';
 import satori from 'satori';
 import { SITE_TITLE } from '../config';
-import fs from 'node:fs/promises';
-import path from 'node:path';
 
 // 日本語対応フォント - IBMよりもっと一般的なNoto Sansを使用
 const fontFamily = 'Noto Sans JP';
@@ -223,7 +223,7 @@ async function fetchFont(
       cachedFont.byteOffset,
       cachedFont.byteOffset + cachedFont.byteLength,
     ) as ArrayBuffer;
-  } catch (error) {
+  } catch {
     console.log(`キャッシュにフォントがありません: ${cacheFileName}`);
   }
 

@@ -1,7 +1,9 @@
 ---
+import { loadTalks, loadWorks } from '../lib/api-v1';
 import { fetchOgpAll } from '../lib/ogp';
-import { talks, works } from '../lib/talks';
 import OgpCard from './OgpCard.astro';
+
+const [talks, works] = await Promise.all([loadTalks(), loadWorks()]);
 
 // 新しいものが上に来るように並べ替える（データは時系列順）
 const sortedTalks = [...talks].sort((a, b) => b.date.localeCompare(a.date));

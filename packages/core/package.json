@@ -1,0 +1,17 @@
+{
+  "name": "@infixer/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "infixer.net のサイト・スクリプト・CLI で共有するコンテンツ処理",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "dependencies": {
+    "github-slugger": "^2.0.0",
+    "temporal-polyfill": "^0.3.2",
+    "yaml": "^2.9.0",
+    "zod": "^4.3.6"
+  }
+}

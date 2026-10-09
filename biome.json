@@ -20,6 +20,9 @@
       "src/**/*.json",
       "src/**/*.css",
       "src/**/*.astro",
+      "packages/**/*.ts",
+      "packages/**/*.js",
+      "packages/**/*.json",
       "*.json"
     ]
   },

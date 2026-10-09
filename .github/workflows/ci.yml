@@ -43,3 +43,24 @@ jobs:
       - run: pnpm astro check
 
       - run: pnpm test:images
+
+  cli:
+    name: CLI / Content Validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm typecheck:packages
+
+      - run: pnpm test:cli
+
+      - run: pnpm infixer validate

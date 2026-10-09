@@ -1,0 +1,13 @@
+# 作ったもの（infixer works add で追記できます）
+- id: "emo-lan"
+  title: emo-lan
+  url: https://github.com/ryokatsuse/emo-lan
+  description: 絵文字でコーディングしてHTMLにコンパイルしてくれる難解プログラミング言語
+- id: "js-stack-viewer"
+  title: 技術スタックビューワー
+  url: https://js-stack-viewer.vercel.app/
+  description: Webサイトで使われている技術スタックを可視化するツール
+- id: "dev-launcher"
+  title: dev-launcher
+  url: https://github.com/ryokatsuse/dev-launcher
+  description: 複数の開発環境をまとめて立ち上げられる、開発環境管理のためのCLI

@@ -8,22 +8,27 @@
  */
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { parse as parseYaml } from 'yaml';
+import {
+  collectionNames,
+  collections,
+  ENTRY_EXTENSION,
+  entryIdFromPath,
+  ogImageName,
+  parseFrontmatter,
+} from '@infixer/core';
 import { getOgImage } from '../src/components/OgImage.js';
 
 const ROOT = process.cwd();
 const OUT_DIR = path.join(ROOT, 'public', 'og');
-const POEM_PREFIX = 'poems-';
-
-const COLLECTIONS = [
-  { dir: path.join(ROOT, 'src', 'content', 'blog'), prefix: '' },
-  { dir: path.join(ROOT, 'src', 'content', 'poems'), prefix: POEM_PREFIX },
-];
-
 // 全記事を作り直したいときは `pnpm og --force`
 const force = process.argv.includes('--force');
 
-type Entry = { slug: string; title: string; sourcePath: string };
+// `<collection>:<id>`（例: `blog:2026/like-weapon`）を渡すとその記事だけ生成する（infixer og から使う）
+const targets = new Set(
+  process.argv.slice(2).filter((arg) => !arg.startsWith('--')),
+);
+
+type Entry = { key: string; slug: string; title: string; sourcePath: string };
 
 async function collectFiles(dir: string): Promise<string[]> {
   const dirents = await fs.readdir(dir, { withFileTypes: true });
@@ -31,19 +36,15 @@ async function collectFiles(dir: string): Promise<string[]> {
     dirents.map(async (dirent) => {
       const full = path.join(dir, dirent.name);
       if (dirent.isDirectory()) return collectFiles(full);
-      return /\.mdx?$/.test(dirent.name) ? [full] : [];
+      return ENTRY_EXTENSION.test(dirent.name) ? [full] : [];
     }),
   );
   return files.flat();
 }
 
 function extractTitle(source: string, filePath: string): string {
-  const match = source.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-  if (!match) {
-    throw new Error(`frontmatter が見つかりません: ${filePath}`);
-  }
-  const data = parseYaml(match[1]) as { title?: unknown };
-  if (typeof data?.title !== 'string') {
+  const { data } = parseFrontmatter(source);
+  if (typeof data.title !== 'string') {
     throw new Error(`title が見つかりません: ${filePath}`);
   }
   return data.title;
@@ -52,24 +53,26 @@ function extractTitle(source: string, filePath: string): string {
 async function collectEntries(): Promise<Entry[]> {
   const entries: Entry[] = [];
 
-  for (const { dir, prefix } of COLLECTIONS) {
+  for (const collection of collectionNames) {
+    const dir = path.join(ROOT, collections[collection].dir);
     for (const filePath of await collectFiles(dir)) {
-      // Astro の glob ローダーと同じ id（拡張子なしの相対パス）を再現する
-      const id = path
-        .relative(dir, filePath)
-        .replace(/\.mdx?$/, '')
-        .split(path.sep)
-        .join('/');
+      // Astro の glob ローダーと同じ id（拡張子なし・セグメントごとに slug 化）を再現する
+      const id = entryIdFromPath(
+        path.relative(dir, filePath).split(path.sep).join('/'),
+      );
       const source = await fs.readFile(filePath, 'utf-8');
       entries.push({
-        slug: `${prefix}${id.replace(/\//g, '-')}`,
+        key: `${collection}:${id}`,
+        slug: ogImageName(collection, id),
         title: extractTitle(source, filePath),
         sourcePath: filePath,
       });
     }
   }
 
-  return entries;
+  return targets.size > 0
+    ? entries.filter((entry) => targets.has(entry.key))
+    : entries;
 }
 
 /** 出力済みPNGがソースより新しければ再生成をスキップする */

@@ -1,0 +1,25 @@
+{
+  "name": "@infixer/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "infixer.net のコンテンツをターミナルから閲覧・管理する CLI",
+  "bin": {
+    "infixer": "./bin/infixer.js"
+  },
+  "scripts": {
+    "test": "tsx --test test/*.test.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@infixer/core": "workspace:*",
+    "github-slugger": "^2.0.0",
+    "tsx": "^4.23.1",
+    "yaml": "^2.9.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "typescript": "^5.9.3"
+  }
+}

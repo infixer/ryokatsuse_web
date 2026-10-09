@@ -108,7 +108,6 @@ infixer <resource> <action> [args] [flags]
 | `infixer talks add` | 対話形式で登壇資料を追加（title / url / date / event / scope）。フラグでも指定可 |
 | `infixer works add` | 作ったものを追加 |
 | `infixer og [<id>...] [--force]` | `scripts/generate-og.mts` のラッパー。id 指定で単体生成 |
-| `infixer likes set <id> <count>` / `likes reset <id>` | Turso を直接更新（`.dev.vars` の資格情報を使用。`--yes` なしでは確認プロンプト） |
 
 ### 4.3 `validate` でチェックする内容
 
@@ -218,9 +217,20 @@ MDX の本文はコンポーネント（`<LinkCard>` など）を含むので、
 | 3 | `/api/v1/*` の静的 JSON、`RemoteSource`、`open`、`likes` | リポジトリ外から infixer.net を読める |
 | 4 | npm 公開（`npx infixer posts latest`）、`likes top`・管理系、同じ core を使った MCP サーバー | 誰でも使える／AI エージェントからも操作できる |
 
-## 9. 決めておきたいこと
+## 9. 決定事項と実装時の変更点
 
-1. **配布範囲**: 自分用（リポジトリ内だけ）で十分か、npm に公開して読者も使えるようにするか。後者ならフェーズ 3〜4 が必要
-2. **talks.ts の YAML 化**: データの置き場所が変わるので、Scrapbox の「成果物」ページとの二重管理をどうするか（CLI から Scrapbox を正にして同期する案もある）
-3. **共通コードの置き場**: pnpm workspace にして `packages/core` にするか、単一パッケージのまま `src/core/` に置くか。CLI を npm 公開するなら workspace の方が素直
-4. **いいねの管理系コマンド**: 本番 DB を直接書き換える操作を CLI に持たせるか（持たせるなら確認プロンプト＋`--yes` 必須）
+| 項目 | 決定 |
+| --- | --- |
+| 配布範囲 | 自分用。npm 公開はしない（フェーズ 4 の npm 公開は対象外。グローバルに使うときは `pnpm link --global`） |
+| talks.ts の YAML 化 | 行う。Scrapbox の「成果物」ページとは二重管理（Scrapbox には落選したプロポーザルなどのメモも載せているため） |
+| 共通コードの置き場 | pnpm workspace（`packages/core` と `packages/cli`） |
+| いいねの管理系コマンド | 持たない（`likes` は読み取りのみ） |
+
+実装の過程で設計から変えた点:
+
+- **CLI の置き場**: `cli/` ではなく workspace に揃えて `packages/cli` にした
+- **登壇資料の id**: 例では `web-haptics-api` のように URL 由来にしていたが、Scrapbox や Speaker Deck の URL からは読みやすい id が作れないため、登壇日（`2026-09-17`、重複時は `-2`）にした。作ったものは URL から推測する
+- **並び順の保持**: Astro の `file()` ローダーは id 順に並べ替えるため、YAML の並び順を `order` として持たせる parser（`parseOrderedYaml`）を通している
+- **validate の終了コード**: error があれば 1、warning だけなら 0（`--strict` で warning も 1）。既存記事の warning で CI が落ちないようにするため
+- **id の算出**: Astro の glob ローダーはファイル名をセグメントごとに slug 化する（`web-idl..mdx` → `web-idl`）。これまで `generate-og.mts` は slug 化していなかったので、`..` を含む記事の OGP 画像のパスがずれていた。core の `entryIdFromPath` に寄せて解消した
+- **ローカル/リモートの一致**: 本文の前後の空行（Astro は落とす）と、同じ日付の記事の並び（id 順で固定）を揃えた

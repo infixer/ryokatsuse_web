@@ -1,6 +1,7 @@
 /**
  * ブログ記事検索機能
  */
+import { includesQuery, sortByDateDesc } from '@infixer/core/search';
 
 // 検索に使用する記事データの型定義
 export interface BlogPost {
@@ -36,19 +37,17 @@ export const searchPosts = (posts: BlogPost[], query: string): BlogPost[] => {
     return [];
   }
 
-  const lowerQuery = query.toLowerCase();
   const filteredPosts = posts.filter(
     (post) =>
-      post.data.title.toLowerCase().includes(lowerQuery) ||
-      post.body.toLowerCase().includes(lowerQuery),
+      includesQuery(post.data.title, query) || includesQuery(post.body, query),
   );
 
   // 日付で降順ソート（最新のポストを最初に表示）
-  return [...filteredPosts].sort((a, b) => {
-    const dateA = new Date(a.data.publishDate).getTime();
-    const dateB = new Date(b.data.publishDate).getTime();
-    return dateB - dateA; // 降順
-  });
+  return sortByDateDesc(
+    filteredPosts,
+    (post) => post.data.publishDate,
+    (post) => post.slug,
+  );
 };
 
 /**

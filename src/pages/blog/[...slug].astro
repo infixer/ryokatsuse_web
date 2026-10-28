@@ -51,7 +51,8 @@ const ogImageURLAsset = assets.find((asset) => {
   twitterCard={entry.data.twitterCard as "summary" | "summary_large_image" | undefined}
 >
   <div class="reading-progress" aria-hidden="true"></div>
-  <article>
+  <article class="post-article">
+    <div class="post-aside">
     <div class="mb-8">
       <a href="/blog" class="text-black dark:text-white underline hover:hover:no-underline flex items-center">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -107,11 +108,14 @@ const ogImageURLAsset = assets.find((asset) => {
     
     <hr class="my-4" />
     <TableOfContents headings={headings.filter((heading: {depth: number}) => heading.depth >= 2 && heading.depth <= 4)} />
-    <div class="container post">
-      <Content />
     </div>
-    <References references={entry.data.references} citedIds={citedIds} />
-    <ShareButtons title={entry.data.title} url={new URL(Astro.url.pathname, Astro.site).toString()} />
+    <div class="post-main">
+      <div class="container post">
+        <Content />
+      </div>
+      <References references={entry.data.references} citedIds={citedIds} />
+      <ShareButtons title={entry.data.title} url={new URL(Astro.url.pathname, Astro.site).toString()} />
+    </div>
   </article>
 </Layout>
 
@@ -168,5 +172,43 @@ const ogImageURLAsset = assets.find((asset) => {
 
   .dark .reading-progress {
     background: linear-gradient(to right, var(--color-blue-400), var(--color-violet-400));
+  }
+
+  /*
+    iPhone Duo などの折りたたみ端末を本のように開いたとき（左右2画面）、
+    折り目をまたいで本文が流れないよう左画面にタイトル・目次、右画面に本文を置く。
+    https://webkit.org/blog/18486/webkit-features-for-safari-27-1/
+  */
+  @media (horizontal-viewport-segments: 2) {
+    .layout-container:has(.post-article) {
+      max-width: none;
+      padding: 0;
+    }
+
+    .post-article {
+      display: grid;
+      grid-template-columns:
+        env(viewport-segment-width 0 0)
+        env(viewport-segment-width 1 0);
+      /* 折り目（ヒンジ）の幅ぶん列の間を空ける */
+      column-gap: calc(
+        env(viewport-segment-left 1 0) - env(viewport-segment-right 0 0)
+      );
+    }
+
+    .post-aside,
+    .post-main {
+      min-width: 0;
+      padding: 1rem;
+    }
+
+    /* 本文をスクロールしても左画面に目次が残るようにする */
+    .post-aside {
+      position: sticky;
+      top: 3.5rem;
+      align-self: start;
+      max-height: calc(100dvh - 3.5rem);
+      overflow-y: auto;
+    }
   }
 </style>

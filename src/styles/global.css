@@ -50,6 +50,8 @@ body {
   display: flex;
   flex-flow: column;
   min-height: 100vh;
+  /* 折りたたみ端末の開閉などでビューポートの高さが変わっても追従させる */
+  min-height: 100dvh;
 }
 
 main {

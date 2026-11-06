@@ -217,6 +217,90 @@ html:not(.is-ready) .slide:first-child {
   content: "🔗 ";
 }
 
+/* 埋め込み（YouTube・Speaker Deck など）。ブロックの大きさに収まる最大の比率で置く */
+
+.block-embed {
+  flex: 1;
+  min-height: 0;
+  container-type: size;
+}
+
+.embed {
+  position: relative;
+  width: min(100cqw, 100cqh * var(--ratio));
+  aspect-ratio: var(--ratio);
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+  box-shadow: var(--shadow);
+}
+
+.embed-fixed {
+  width: min(100cqw, 70cqh);
+  height: 100cqh;
+  aspect-ratio: auto;
+}
+
+.embed iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* 読み込む前（発表者ビューの「次のスライド」など）は再生マークだけ出す */
+.embed:has(iframe:not([src]))::before {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 4cqh;
+  content: "▶";
+}
+
+/* X のポスト。widgets.js は読まず、引用カードとして出す */
+.block-tweet {
+  display: flex;
+  justify-content: center;
+  min-height: 0;
+}
+
+.slide .body blockquote.twitter-tweet {
+  width: min(100%, 44em);
+  max-height: 100%;
+  margin: 0;
+  padding: 1.2em 1.5em;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--fg) 4%, transparent);
+  font-size: 1.4cqw;
+  color: var(--muted);
+}
+
+.body blockquote.twitter-tweet::before {
+  display: block;
+  margin-bottom: 0.4em;
+  font-size: 1.6cqw;
+  font-weight: 700;
+  color: var(--fg);
+  content: "𝕏";
+}
+
+.body blockquote.twitter-tweet p {
+  margin: 0 0 0.8em;
+  font-size: 1.8cqw;
+  line-height: 1.5;
+  color: var(--fg);
+}
+
+.block-html {
+  overflow: auto;
+}
+
 /* レイアウトごとの配置 */
 
 .layout-title .slide-inner,
@@ -604,7 +688,10 @@ html.is-ready[data-theme="terminal"] .slide {
   border-radius: 2cqw;
 }
 
-[data-theme="pop"] .slide-inner::after {
+/* 飾りの丸は文字だけのスライドに出す（動画や図に重ならないように） */
+[data-theme="pop"]
+  :is(.layout-title, .layout-section, .layout-statement, .layout-end)
+  .slide-inner::after {
   position: absolute;
   top: 5cqh;
   right: 5cqw;
@@ -617,7 +704,14 @@ html.is-ready[data-theme="terminal"] .slide {
   content: "";
 }
 
-[data-theme="pop"] .slide.is-active .slide-inner::after {
+[data-theme="pop"]
+  .slide.is-active:is(
+    .layout-title,
+    .layout-section,
+    .layout-statement,
+    .layout-end
+  )
+  .slide-inner::after {
   animation:
     pop-in 0.6s var(--ease) 0.3s both,
     float 4s ease-in-out 1s infinite;
@@ -632,7 +726,9 @@ html.is-ready[data-theme="terminal"] .slide {
   color: var(--fg);
 }
 
-[data-theme="pop"] .heading {
+[data-theme="pop"]
+  :is(.layout-title, .layout-section, .layout-statement)
+  .heading {
   margin-right: 10cqw;
 }
 
@@ -647,12 +743,14 @@ html.is-ready[data-theme="terminal"] .slide {
 
 [data-theme="pop"] .body pre.shiki,
 [data-theme="pop"] .card,
+[data-theme="pop"] .embed,
+[data-theme="pop"] .body blockquote.twitter-tweet,
 [data-theme="pop"] .body table {
   border: 0.3cqw solid var(--line);
   box-shadow: var(--shadow);
 }
 
-[data-theme="pop"] .body blockquote {
+[data-theme="pop"] .body blockquote:not(.twitter-tweet) {
   border-left-width: 0.8cqw;
 }
 

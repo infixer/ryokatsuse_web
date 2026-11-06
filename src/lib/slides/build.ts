@@ -22,8 +22,9 @@ import { createJavaScriptRegexEngine } from 'shiki/engine/javascript';
  *
  * 変換ルール
  * - `##` が章、`###` 以下が章の中のスライドになる。`---` は同じ見出しのままスライドを分ける
- * - 段落はスピーカーノート。リスト・コード・画像・引用・表・リンクカードがスライドに出る
- * - コード・画像・表は 1 枚に 1 つまで。2 つ目が来たら次のスライドに送る
+ * - 段落はスピーカーノート。それ以外（リスト・コード・画像・引用・表・リンクカード・
+ *   YouTube などの iframe・X のポスト・生 HTML）は記事に載っているものとしてスライドにも出す
+ * - コード・画像・表・埋め込みは 1 枚に 1 つまで。2 つ目が来たら次のスライドに送る
  * - スライドに出すものがない見出しは、段落中の **太字** をキーメッセージとして大きく出す
  */
 
@@ -36,6 +37,7 @@ export type SlideLayout =
   | 'image'
   | 'quote'
   | 'table'
+  | 'embed'
   | 'content'
   | 'end';
 
@@ -76,10 +78,21 @@ export interface BuildDeckInput {
 }
 
 /** スライドに出すブロック（段落以外） */
-type VisibleKind = 'list' | 'code' | 'image' | 'quote' | 'table' | 'card';
+type VisibleKind =
+  | 'list'
+  | 'code'
+  | 'image'
+  | 'quote'
+  | 'table'
+  | 'card'
+  | 'embed'
+  | 'tweet'
+  | 'html';
 interface VisibleBlock {
   kind: VisibleKind;
   node: RootContent;
+  /** embed / tweet / html は本文の HTML から組み立てたものを持つ */
+  html?: string;
 }
 
 interface Draft {
@@ -91,11 +104,18 @@ interface Draft {
   notes: RootContent[];
 }
 
-const HEAVY: ReadonlySet<VisibleKind> = new Set(['code', 'image', 'table']);
+const HEAVY: ReadonlySet<VisibleKind> = new Set([
+  'code',
+  'image',
+  'table',
+  'embed',
+  'tweet',
+  'html',
+]);
 
 export async function buildDeck(input: BuildDeckInput): Promise<Deck> {
   const tree = parse(input.body, input.mdx);
-  const drafts = splitIntoDrafts(tree.children);
+  const drafts = splitIntoDrafts(tree.children, input.body);
   const { options } = input;
 
   const slides: Slide[] = [];
@@ -105,12 +125,16 @@ export async function buildDeck(input: BuildDeckInput): Promise<Deck> {
     layout: 'title',
     heading: options.title ?? input.title,
     bodyHtml: '',
-    // 最初の見出しより前の段落は表紙のノートにする
-    notesHtml: intro ? await renderBlocks(intro.notes) : '',
+    // 最初の見出しより前の段落は表紙のノートにする。
+    // ただし表示するもの（動画など）があれば、そのスライドのノートにする
+    notesHtml:
+      intro && intro.visible.length === 0
+        ? await renderBlocks(intro.notes)
+        : '',
     steps: 0,
   });
   if (intro && intro.visible.length > 0) {
-    slides.push(await toSlide({ ...intro, notes: [] }, options));
+    slides.push(await toSlide(intro, options));
   }
   for (const draft of drafts) {
     slides.push(await toSlide(draft, options));
@@ -145,7 +169,10 @@ function parse(body: string, mdx: boolean): Root {
 }
 
 /** 本文のブロックを見出しと区切り線で分け、表示するものとノートに振り分ける */
-export function splitIntoDrafts(children: RootContent[]): Draft[] {
+export function splitIntoDrafts(
+  children: RootContent[],
+  source: string,
+): Draft[] {
   const drafts: Draft[] = [];
   let section: string | undefined;
   let current: Draft = newDraft();
@@ -191,7 +218,7 @@ export function splitIntoDrafts(children: RootContent[]): Draft[] {
     }
     if (node.type === 'heading') continue; // h1 は記事タイトルと重複するので使わない
 
-    const block = classify(node);
+    const block = classify(node, source);
     if (block === 'notes') {
       pendingNotes.push(node);
       continue;
@@ -216,19 +243,36 @@ function newDraft(heading?: string, kicker?: string): Draft {
   return { heading, kicker, isSectionHead: false, visible: [], notes: [] };
 }
 
-function classify(node: RootContent): VisibleBlock | 'notes' | null {
+function classify(
+  node: RootContent,
+  source: string,
+): VisibleBlock | 'notes' | null {
   switch (node.type) {
     case 'paragraph': {
       if (isImageParagraph(node)) return { kind: 'image', node };
       // 1 行に書いた <div>…</div> や <LinkCard /> は段落として読まれるので、要素単体として扱う
       const only = meaningfulChildren(node);
-      if (only.length === 1 && only[0].type === 'mdxJsxTextElement') {
-        return only[0].name === 'LinkCard'
-          ? { kind: 'card', node: only[0] as unknown as RootContent }
-          : null;
+      if (
+        only.length === 1 &&
+        only[0].type === 'mdxJsxTextElement' &&
+        only[0].name === 'LinkCard'
+      ) {
+        return { kind: 'card', node: only[0] as unknown as RootContent };
       }
+      // 段落が HTML 要素だけでできている（X の埋め込みの blockquote + script など）
+      const onlyHtml =
+        only.length > 0 &&
+        only.every(
+          (child) =>
+            child.type === 'html' ||
+            (child.type === 'mdxJsxTextElement' &&
+              isHtmlElementName(child.name)),
+        );
+      if (onlyHtml) return rawHtmlBlock(node, sourceOf(node, source));
       return 'notes';
     }
+    case 'html':
+      return rawHtmlBlock(node, node.value);
     case 'list':
       return { kind: 'list', node };
     case 'code':
@@ -238,11 +282,80 @@ function classify(node: RootContent): VisibleBlock | 'notes' | null {
     case 'table':
       return { kind: 'table', node };
     case 'mdxJsxFlowElement':
-      return node.name === 'LinkCard' ? { kind: 'card', node } : null;
+      if (node.name === 'LinkCard') return { kind: 'card', node };
+      // 小文字の要素（div・iframe・blockquote など）は HTML としてそのまま出す。
+      // 大文字のコンポーネントはスライドでは描画できないので落とす
+      return isHtmlElementName(node.name)
+        ? rawHtmlBlock(node, sourceOf(node, source))
+        : null;
     default:
-      // import 文・式・生 HTML（iframe など）はスライドでは扱わない
+      // import 文・式はスライドでは扱わない
       return null;
   }
+}
+
+function isHtmlElementName(name: string | null | undefined): boolean {
+  return Boolean(name && /^[a-z]/.test(name));
+}
+
+function sourceOf(node: RootContent, source: string): string {
+  const start = node.position?.start.offset;
+  const end = node.position?.end.offset;
+  return start === undefined || end === undefined
+    ? ''
+    : source.slice(start, end);
+}
+
+/**
+ * 本文に書かれた生 HTML をスライド用に整える。
+ * - iframe（YouTube・Speaker Deck など）は 16:9 の枠に入れ直す
+ * - X のポスト（blockquote.twitter-tweet）は引用カードとして出す（widgets.js は読まない）
+ * - それ以外はそのまま出す。<script> とコメントは落とす
+ */
+export function rawHtmlBlock(
+  node: RootContent,
+  raw: string,
+): VisibleBlock | null {
+  const html = raw
+    .replace(/<script\b[\s\S]*?(?:<\/script>|\/>)/gi, '')
+    .replace(/<!--[\s\S]*?-->/g, '')
+    // タグ内に全角スペースが紛れていてもブラウザと同じく区切りとして読む
+    .replace(/<[^>]+>/g, (tag) => tag.replace(/\u3000/g, ' '))
+    .trim();
+  if (!html) return null;
+  if (/<iframe\b/i.test(html)) {
+    const embed = embedHtml(html);
+    return embed ? { kind: 'embed', node, html: embed } : null;
+  }
+  if (/class=["'][^"']*\btwitter-tweet\b/.test(html)) {
+    return { kind: 'tweet', node, html };
+  }
+  return { kind: 'html', node, html };
+}
+
+function embedHtml(html: string): string {
+  return [...html.matchAll(/<iframe\b[^>]*>/gi)]
+    .map(([tag]) => {
+      const attr = (name: string) => {
+        const match = tag.match(
+          new RegExp(`\\s${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)')`, 'i'),
+        );
+        return match ? (match[1] ?? match[2]) : undefined;
+      };
+      const src = attr('src');
+      if (!src) return '';
+      const width = Number(attr('width'));
+      const height = Number(attr('height'));
+      // Spotify などの縦長プレーヤーは比率を固定しない
+      const fixed = /open\.spotify\.com/.test(src);
+      const ratio = width > 0 && height > 0 ? `${width} / ${height}` : '16 / 9';
+      const allow = attr('allow');
+      // src は表示したときに runtime が入れる（裏で動画が再生され続けないように）
+      return `<div class="embed${fixed ? ' embed-fixed' : ''}" style="--ratio:${ratio}"><iframe data-src="${escapeAttr(src)}" title="${escapeAttr(attr('title') ?? '埋め込みコンテンツ')}"${
+        allow ? ` allow="${escapeAttr(allow)}"` : ''
+      } allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`;
+    })
+    .join('');
 }
 
 function meaningfulChildren(node: Paragraph) {
@@ -303,6 +416,9 @@ async function toSlide(draft: Draft, options: SlidesOptions): Promise<Slide> {
             quote: 'quote',
             table: 'table',
             card: 'content',
+            embed: 'embed',
+            tweet: 'quote',
+            html: 'content',
           } as const
         )[draft.visible[0].kind];
 
@@ -350,6 +466,7 @@ async function renderVisible(
   onListItem: (li: Element) => void,
 ): Promise<string> {
   const { node } = block;
+  if (block.html !== undefined) return block.html;
   switch (block.kind) {
     case 'code':
       return highlight(node as Code);

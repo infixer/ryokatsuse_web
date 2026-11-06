@@ -2,6 +2,7 @@
  * スライドページのクライアント側の動き。
  * - ←→・Space・PageUp/Down・Home/End・スワイプ・クリックで移動
  * - N でノート、P で発表者ビュー（別ウィンドウ。BroadcastChannel で同期）、F で全画面、T でテーマ切り替え
+ * - YouTube などの埋め込みは表示中のスライドだけ読み込み、離れたら止める
  * - URL の #3 で 3 枚目から開く。?theme=paper でプリセットを試せる
  */
 
@@ -63,6 +64,16 @@ export function startSlides() {
       slide.classList.toggle('is-past', i < index);
       slide.inert = !active;
       slide.setAttribute('aria-hidden', String(!active));
+      // 埋め込み（YouTube など）は表示中のスライドだけ読み込む。離れたら外して再生を止める
+      slide
+        .querySelectorAll<HTMLIFrameElement>('iframe[data-src]')
+        .forEach((iframe) => {
+          if (active && !iframe.hasAttribute('src')) {
+            iframe.src = iframe.dataset.src!;
+          } else if (!active && iframe.hasAttribute('src')) {
+            iframe.removeAttribute('src');
+          }
+        });
       slide.querySelectorAll<HTMLElement>('[data-step]').forEach((item) => {
         item.classList.toggle(
           'is-shown',
@@ -93,6 +104,9 @@ export function startSlides() {
       return;
     }
     const clone = next.cloneNode(true) as HTMLElement;
+    clone
+      .querySelectorAll('iframe')
+      .forEach((iframe) => iframe.removeAttribute('src'));
     clone.classList.add('is-active', 'is-static');
     clone
       .querySelectorAll('[data-step]')

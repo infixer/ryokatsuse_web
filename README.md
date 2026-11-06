@@ -12,6 +12,10 @@ Markdown/MDXの `![説明](/images/photo.jpg)` 形式のローカルJPEG・PNG�
 
 `public/images` の元画像はそのまま配信するため、OGPや既存の直接リンクは維持されます。外部画像・GIF・SVG・アニメーション画像・クエリ付きURL・HTMLのimgタグは対象外です。変換処理のテストは `pnpm test:images` で実行できます。
 
+## 記事からスライドを生成する
+
+記事の frontmatter に `slides:` を足すと、本文をスピーカーノートとして `/slides/<記事id>` にアニメーション付きのスライドを生成します。変換ルールとプリセットは [docs/slides.md](docs/slides.md) を参照してください。
+
 ## infixer CLI
 
 記事・ポエム・登壇資料・作ったもの・いいね数をターミナルから閲覧・管理するための自分用 CLI です。設計は [docs/cli-design.md](docs/cli-design.md) を参照してください。

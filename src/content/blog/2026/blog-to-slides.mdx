@@ -1,0 +1,339 @@
+---
+title: ブログ記事からスライドを作れるようにしました
+publishDate: "2026-11-06"
+slides:
+  theme: keynote
+references:
+  - id: mdast-from-markdown
+    title: "syntax-tree/mdast-util-from-markdown"
+    url: "https://github.com/syntax-tree/mdast-util-from-markdown"
+    description: "Markdownをmdast（Markdownの構文木）にするライブラリ"
+  - id: shiki-engines
+    title: "Shiki: Regex Engines"
+    url: "https://shiki.style/guide/regex-engines"
+    description: "Shikiの正規表現エンジン（WASMとJavaScript）"
+  - id: mdast-to-hast
+    title: "syntax-tree/mdast-util-to-hast"
+    url: "https://github.com/syntax-tree/mdast-util-to-hast"
+    description: "mdastをHTMLの構文木（hast）にするライブラリ。data.hNameで要素名を変えられる"
+  - id: container-units
+    title: "MDN: Container size and style queries"
+    url: "https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_containment/Container_size_and_style_queries"
+    description: "コンテナ単位（cqw / cqh）の説明"
+  - id: inert
+    title: "MDN: inert"
+    url: "https://developer.mozilla.org/ja/docs/Web/HTML/Global_attributes/inert"
+  - id: broadcast-channel
+    title: "MDN: Broadcast Channel API"
+    url: "https://developer.mozilla.org/ja/docs/Web/API/Broadcast_Channel_API"
+---
+
+import Cite from '../../../components/Cite.astro';
+
+よろしくお願いします。こんにちはinfixerといいます。都内でフロントエンドエンジニアとして働いています。インターネットではこのあたり（スライドの右下の自己紹介エリア参照）に住んでいるので良かったらのぞいてみてください。
+
+今日はこのブログに入れたスライドの仕組みについて話します。今投影しているこのスライドもブログの記事から作ったものです。使い方を紹介したあと、記事をどうやってスライドにしているのかを紹介します。
+
+## 作ったもの
+
+ブログの記事に設定を少し足すと、その記事からスライドを作る仕組みです。
+
+- 記事のfrontmatterに`slides`を足すと、`/slides/記事のid`にスライドができる
+- 記事の段落はスピーカーノートになる
+- リスト・コード・画像・表はスライドに出る
+
+これが表紙です。記事のタイトルと日付が入り、右下に自己紹介が出ます。
+
+![このスライドの表紙。記事のタイトルと日付、右下に自己紹介が出ている](/images/blog-slides-title-96b1b595.png)
+
+## 作ろうと思った理由
+
+今年、LTや登壇などを機会をいくつか行なってきました。その中で、自分のスタイルとして話したいアウトラインを先に書き、スライドを作りながらある程度できたらスピーカーノートを書くみたいなことをしていました。しかし時間がかかるなと感じていて最初から話したい内容、つまりスピーカーノートをブログにしてしまい、その内容からいい感じにスライドを作ってしまえないかと思い作りました。
+
+もちろんスライドの表現力やスライド芸みたいなもので見やすくしないといけないこともあるかと思いますが、LTなどではスライドでは説明できない補足情報などを後で、ブログにするケースもあったため今回LT用途向けに作ってみたものです。（もちろん今回作ったものは全てAI製です。技術スタックとか設計などは人間がある程度行いました。）
+
+**記事を先に書いて、スライドはあとから作る**
+
+記事の段落がそのままスピーカーノートになるので、発表が終わってから話した内容を記事に書き起こす必要がありません。
+
+## 書き方のルール
+
+段落はスライドには出ないので、話す内容は段落に書き、見せたいものはリストや画像にします。表示するものがない見出しでは、段落の中の太字を大きく出します。さっきの「記事を先に書いて、スライドはあとから作る」のスライドも、この太字からできたものです。
+
+記事のどこがスライドに投影されるかは、次のように決めています。
+
+| 記事 | スライド |
+| --- | --- |
+| `##`の見出し | 章の区切り |
+| `###`の見出し | 1枚のスライド |
+| `---` | 同じ見出しのままスライドを分ける |
+| 段落 | スピーカーノート（スライドには出ない） |
+| リスト・コード・画像・表 | スライドに出る |
+| 段落の中の太字 | 表示するものがないときに大きく出る |
+
+この表がスライドになると、こうなります。もう少し改善の余地はありますが、一旦最低限のことはできます。
+
+![このスライドの「書き方のルール」。表がそのままスライドになっている](/images/blog-slides-table-91eb769a.png)
+
+## 全体の流れ
+
+ここからは仕組みの話です。処理はビルドのときに動くものと、ブラウザで動くものに分かれています。
+
+- ビルド時：記事の本文をMarkdownの構文木にして、スライドのHTMLを作る
+- ブラウザ描画時: スライドモードに切り替え、発表者ビューとの同期
+
+ビルドでは、Astroの`getStaticPaths`でfrontmatterに`slides`がある記事だけを集めて、`/slides/記事のid`のページを事前生成しています。Markdownの解析とコードの色付けはビルドのときにだけ動くので、そのためのライブラリはブラウザでは使っていません。ブラウザに送るJavaScriptは、スライドを操作する処理とスライドに内容が収まらない時のはみ出しを調整する処理だけです。
+
+## 記事をスライドに分ける
+
+### Markdownを構文木にする
+
+まず[mdast-util-from-markdown](https://github.com/syntax-tree/mdast-util-from-markdown)で、記事の本文をmdastというMarkdownの構文木にします<Cite id="mdast-from-markdown" />。表を読めるように`GitHub Flavored Markdown`の拡張を入れていて、`.mdx`の記事ではMDXの拡張も入れます。
+
+```ts
+function parse(body: string, mdx: boolean): Root {
+  return fromMarkdown(body, {
+    extensions: mdx ? [gfm(), mdxjs()] : [gfm()],
+    mdastExtensions: mdx
+      ? [gfmFromMarkdown(), mdxFromMarkdown()]
+      : [gfmFromMarkdown()],
+  });
+}
+```
+
+### 見出しで区切る
+
+構文木のいちばん上の要素を、先頭から順に見ていきます。見出しと区切り線が来たら、そこでスライドを分けます。
+
+- `##`が来たら、章の名前を覚えて新しいスライドを始める
+- `###`が来たら、章の名前を小さく添えたスライドを始める
+- `---`が来たら、同じ見出しのまま次のスライドにする
+
+`##`のすぐあとに`###`が続いたときは、その`##`を章扉のスライドにします。この「記事をスライドに分ける」の章も、`###`が続いているので章扉になっています。
+
+短い例で、構文木の要素とスライドの対応を図にすると次のようになります。段落はスライドには出ず、同じ色のスライドのスピーカーノートになります。
+
+![構文木の要素とスライドの対応。見出しごとにスライドが分かれ、段落はスピーカーノートになり、---のあとは同じ見出しの続きのスライドになる](/images/blog-slides-tree-2b76ece7.png)
+
+### 段落とそれ以外を振り分ける
+
+段落はスピーカーノートに入れ、それ以外のリスト・コード・画像・表・引用はスライドに出します。段落の形をしていても、画像だけの段落や、リンクカードだけの段落、HTMLの要素だけの段落はスライドに出します。`<Cite />`以外の大文字のコンポーネントはスライドでは描画できないので出しません。
+
+段落はそのあとに出てくるリストや画像と同じスライドのスピーカーノートにしています。リストや画像の前に説明を書くことが多いからです。
+
+**段落は、そのあとに出てくるリストや画像のスピーカーノートになる**
+
+この記事を書いていて、表や画像のあとに続けて書いた説明が、その次のスライドのスピーカーノートになってしまう箇所がありました。説明をリストや画像の前に書くと、意図したスライドのスピーカーノートになります。
+
+### 1枚に載せる量を決める
+
+コード・画像・表・埋め込みは場所を取るので、1枚に1つまでにしています。リストもこれらと同じスライドには載せません。載せられないものが来たら次のスライドに送り、直前の段落もそちらのスピーカーノートにします。
+
+```ts
+const HEAVY: ReadonlySet<VisibleKind> = new Set([
+  'code', 'image', 'table', 'embed', 'tweet', 'html',
+]);
+
+function conflicts(visible: VisibleBlock[], kind: VisibleKind): boolean {
+  const hasHeavy = visible.some((v) => HEAVY.has(v.kind));
+  const hasList = visible.some((v) => v.kind === 'list');
+  if (HEAVY.has(kind)) return hasHeavy || hasList;
+  if (kind === 'list') return hasHeavy;
+  return false;
+}
+```
+
+### レイアウトを選ぶ
+
+スライドのレイアウトは載っているものの種類で選んでいます。
+
+| 載っているもの | レイアウト |
+| --- | --- |
+| リストだけ | 箇条書き |
+| コードだけ | コード |
+| 画像だけ | 画像 |
+| 表だけ | 表 |
+| 種類が混ざっている | 汎用 |
+| 段落しかない | 段落中の太字を大きく出す |
+
+太字を大きく出すときは、最大3つまでにしています。
+
+## HTMLにする
+
+### コードの色付け
+
+コードの色付けにはShikiを使っています。このサイトの事前生成はCloudflare上で動いていて、WASMが使えなさそうでした。そのためWASMの正規表現エンジンではなく素のJavaScriptの正規表現を使っています<Cite id="shiki-engines" />。
+
+```ts
+highlighter ??= createHighlighter({
+  themes: [CODE_THEME],
+  langs: [],
+  engine: createJavaScriptRegexEngine({ forgiving: true }),
+});
+```
+
+テーマは`github-dark-default`にしました。ブログで使っている`github-dark`は、コメントの文字色と背景のコントラスト比が3.05:1しかありません。`github-dark-default`なら6.5:1になります。
+
+### 参照の番号
+
+このブログでは、記事の最後に参照の一覧を出し、本文から番号で参照しています。ブログではAstroのコンポーネントが番号を振っていますが、スライドは構文木から作るので、構文木の段階で`<Cite />`を番号のリンクに置き換えています。
+
+今回[mdast-util-to-hast](https://github.com/syntax-tree/mdast-util-to-hast)というライブラリを使いました。ノードの`data.hName`を見てHTMLの要素名を決めます<Cite id="mdast-to-hast" />。そこで強調のノードに`hName: 'sup'`を付けて、`<sup>`として出しています。`data.citation`に入れた番号とタイトルとURLは、スライドの下に出す出典を集めるためのものです。
+
+```ts
+return {
+  type: 'emphasis',
+  data: {
+    hName: 'sup',
+    hProperties: { className: ['cite'] },
+    citation,
+  },
+  children: [
+    {
+      type: 'link',
+      url: reference.url,
+      title: citation.title,
+      children: [{ type: 'text', value: `[${citation.n}]` }],
+    },
+  ],
+} as RootContent;
+```
+
+最後のスライドの前には参照の一覧のスライドが入ります。
+
+![このスライドの参照の一覧](/images/blog-slides-references-9d5aaa75.png)
+
+## スライドの表示
+
+### 16:9を保つ
+
+スライドはどの画面でも16:9で同じ見た目になるようにしています。スライドを並べる外枠をグリッドにして、すべてのスライドを同じマスに重ねて中央に置く作りです。スライドの幅は枠に収まる最大の16:9になるように、コンテナ単位で決めています<Cite id="container-units" />。
+
+```css
+.deck {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  container-type: size;
+}
+
+.slide {
+  grid-area: 1 / 1;
+  inline-size: min(100cqi, 100cqb * 16 / 9);
+  aspect-ratio: 16 / 9;
+  container-type: size;
+  overflow: clip;
+}
+```
+
+`cqi`は外枠の横幅、`cqb`は縦の高さを基準にした単位です。横幅いっぱいにした場合と、高さいっぱいにした場合の幅を比べて、小さいほうを`min()`で選んでいます。`aspect-ratio`だけでは、縦が足りないときに横幅が縮まないためです。スライドの中はスクロールさせないので、はみ出した部分はスクロール領域を作らない`overflow: clip`で切っています。
+
+スライドの中の文字や余白の大きさも、スライド自体をコンテナにした`cqw`と`cqh`の値です。文字の大きさにはすべて`var(--fit, 1)`を掛けています。この値は、あとで説明するはみ出しの調整で使います。
+
+### デザインをCSS変数で切り替える
+
+デザインは5つ用意しました。
+
+| 名前 | 動き |
+| --- | --- |
+| simple | アニメーションなし |
+| keynote | ふわっと拡大して出る |
+| paper | 横に流れる |
+| pop | 弾んで出る |
+| terminal | 見出しを打ち込むように出る |
+
+デザインごとの違いは`html`要素の`data-theme`に合わせて切り替えるCSS変数になっています。スライドの遷移は`--slide-from`と`--slide-to`、要素の出方は`--enter`にアニメーションの名前を入れて決めています。要素は`--i`の順に少しずつ遅らせて出します。
+
+発表時に好きなテーマにいつでも変更することができます。ほとんどAIが考えた内容をそのまま採用しているので、例えばpopとかはスライドのアニメーションが激しくて面白いです。
+
+```css
+.slide.is-active .anim,
+.slide.is-active .block-list li {
+  animation: var(--enter) var(--dur) var(--ease) backwards;
+  animation-delay: calc(var(--delay) + var(--i, 0) * var(--stagger));
+}
+```
+
+simpleは`--enter`を`none`にして、遷移もなくしています。OSで動きを減らす設定にしている人には、どのデザインでも動くアニメーションを止めます。
+
+terminal以外はこのブログと同じ配色です。ページの先頭で小さなスクリプトが`localStorage`の`theme`を読み、なければOSの設定を見て、ダークモードにするかを決めています。
+
+![このスライドをダークモードで出したところ。コードは暗い背景で出る](/images/blog-slides-dark-code-42f3496b.png)
+
+画面の右下のメニューから、発表中でもデザインを選び直せます。選んだデザインはURLの`?theme=`に残るので、そのURLを共有すれば同じデザインで開けます。
+
+![このスライドの右下の操作バー。デザインを選ぶメニューがある](/images/blog-slides-picker-9182c9da.png)
+
+### 表示中のスライドだけ操作できるようにする
+
+スライドはすべて同じページの中にあり、表示していないスライドは`visibility: hidden`で隠しています。ただ、切り替えのアニメーションの間は、前のスライドもまだ見えています。その間に前のスライドへフォーカスが移らないように、表示していないスライドには`inert`属性<Cite id="inert" />と`aria-hidden`を付けています。
+
+YouTubeなどの埋め込みはURLを`data-src`に入れておき、表示しているスライドの分だけ`src`に入れています。スライドを離れたら`src`を外すので、動画が裏で再生され続けることもありません。
+
+### 発表者ビューとの同期
+
+`P`キーを押すと、発表者ビューが別のウィンドウで開きます。左に今のスライドと次のスライド、右にスピーカーノートが出る画面です。スピーカーノートは記事の段落そのものなので、発表中はここを読みます。タイマーも付けました。
+
+発表者ビューは同じページを`?presenter`付きで開いたものです。2つのウィンドウはBroadcastChannel<Cite id="broadcast-channel" />でつないでいて、どちらかでスライドを進めると、今の位置をもう一方に送ります。デザインを選び直したときも同じように送るので、サーバーは使っていません。
+
+![このスライドの発表者ビュー。左に今のスライドと次のスライド、右にスピーカーノートが出ている](/images/blog-slides-presenter-99e47ed3.png)
+
+ほかにも次のことができます。
+
+- `N`でスライドの下にスピーカーノートを出す
+- `F`で全画面にする
+- 印刷するとPDFにできる
+
+## はみ出し対策
+
+記事をそのままスライドにすると、文字が多いスライドは枠からはみ出します。そこで次の3つを入れました。
+
+- リストとコードや画像は、同じスライドに載せない
+- はみ出すスライドだけ、表示するときに文字を小さくする
+- ビルドしたスライドをブラウザで開いて、はみ出していないかをテストする
+
+1つ目はさっきの「1枚に載せる量を決める」で説明したものです。ここでは2つ目と3つ目を説明します。
+
+### 表示するときに文字を小さくする
+
+ブラウザでスライドを開いたら、1枚ずつはみ出していないかをみます。はみ出していたら`--fit`を小さくして、収まる最大の値を二分探索で探します。
+
+```ts
+if (fitsAt(1)) return { fit: 1, overflow: false };
+if (!fitsAt(MIN_FIT)) return { fit: MIN_FIT, overflow: true };
+let low = MIN_FIT;
+let high = 1;
+while (high - low > PRECISION) {
+  const mid = (low + high) / 2;
+  if (fitsAt(mid)) low = mid;
+  else high = mid;
+}
+return { fit: Math.floor(low * 100) / 100, overflow: false };
+```
+
+文字を小さくするのは60%までです。それでも収まらないスライドには`data-overflow`を付けて、コンソールに警告を出すようにしています。そのときは記事に`---`を入れてスライドを分けています。
+
+スライドを複製して本物の隣に置き、複製のほうと見比べています。表示中のスライドはアニメーションで要素が動いていて、そのままでは正しく測れません。アニメーションを止めたりやり直したりすると見ている人に分かってしまうので、アニメーションを止めた複製を見えない状態で置いて測っています。
+
+書体の読み込みが終わったとき、画面の大きさが変わったとき、画像を読み込んだとき、デザインを選び直したときにも測り直します。
+
+### はみ出しの判定
+
+はみ出しているかどうかは、次の2つで判定しています。
+
+- スライドの本文の領域や、その中のブロックから、子の要素の矩形が出ていないか
+- コードのようにスクロールする要素で、中身が要素より大きくなっていないか
+
+文字の形が行の高さより少しはみ出すことはよくあるので、文字ではなく要素の矩形で見るようにしました。
+
+
+## まとめ
+
+- 記事を書けば、スライドもできる
+- 段落はスピーカーノート、リストや画像はスライドになる
+- 分け方とレイアウトはビルドのときに決め、はみ出しはブラウザで調整する
+- はみ出しはテストで確かめている
+
+
+一旦作ってはみたものの、まだまだ改善の余地はありそうだなと思っています。レイアウトもちょっといけていない部分があるのでちょいちょい変更しようかなと思いました。また、スライドを生成する処理なんかは今までやったことなかったので、AIが作ったものをみて知らないライブラリを学べたり作り方をざっくり把握することができたのはいい発見でした。

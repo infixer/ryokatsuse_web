@@ -73,6 +73,13 @@ const ogImageURLAsset = assets.find((asset) => {
             </span>
           )
         }
+        {
+          entry.data.slides && (
+            <a href={`/slides/${entry.id}`} class="ml-4 underline hover:no-underline">
+              スライドで見る
+            </a>
+          )
+        }
       </div>
       
       <div class="flex items-center gap-2">

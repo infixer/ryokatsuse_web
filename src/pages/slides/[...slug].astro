@@ -1,0 +1,179 @@
+---
+import { getCollection } from 'astro:content';
+import { slideThemes } from '@infixer/core/schema';
+import { buildDeck } from '../../lib/slides/build';
+import { profileIcons, slideProfile } from '../../lib/slides/profile';
+import '../../styles/slides.css';
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const entries = await getCollection('blog', (entry) => Boolean(entry.data.slides));
+  return entries.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const options = entry.data.slides!;
+const postPath = `/blog/${entry.id}`;
+const deck = await buildDeck({
+  body: entry.body ?? '',
+  mdx: entry.filePath?.endsWith('.mdx') ?? false,
+  title: entry.data.title,
+  description: entry.data.description,
+  publishDate: entry.data.publishDate,
+  options,
+  postUrl: postPath,
+  references: entry.data.references,
+});
+const total = deck.slides.length;
+const ogImage = entry.data.ogImageURL || `/og/${entry.id.replace(/\//g, '-')}.png`;
+const pageTitle = `${deck.title}（スライド）`;
+// 操作バーのデザイン選択に出す名前
+const themeLabels: Record<(typeof slideThemes)[number], string> = {
+  simple: 'simple（動きなし）',
+  keynote: 'keynote（ふわっと）',
+  paper: 'paper（横に流れる）',
+  pop: 'pop（弾む）',
+  terminal: 'terminal（端末風）',
+};
+---
+
+<html lang="ja" data-theme={deck.theme}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{pageTitle}</title>
+    {deck.subtitle && <meta name="description" content={deck.subtitle} />}
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content={new URL(Astro.url.pathname, Astro.site)} />
+    <meta property="og:image" content={new URL(ogImage, Astro.site)} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="color-scheme" content="light dark" />
+    <!-- ブログと同じく localStorage の theme（light / dark）、なければ OS の設定でダークにする -->
+    <script is:inline>
+      (() => {
+        let stored = null;
+        try {
+          stored = localStorage.getItem('theme');
+        } catch {}
+        const dark =
+          stored === 'light' || stored === 'dark'
+            ? stored === 'dark'
+            : matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.classList.toggle('dark', dark);
+      })();
+    </script>
+  </head>
+  <body>
+    <main
+      class="deck"
+      data-deck={entry.id}
+      data-themes={slideThemes.join(',')}
+      aria-roledescription="スライドショー"
+      aria-label={deck.title}
+    >
+      {
+        deck.slides.map((slide, index) => (
+          <section
+            class:list={['slide', `layout-${slide.layout}`]}
+            aria-roledescription="スライド"
+            aria-label={`${index + 1} / ${total}`}
+            data-steps={slide.steps}
+          >
+            <div class="slide-inner">
+              {slide.layout === 'title' ? (
+                <>
+                  {deck.event && <p class="eyebrow anim" style="--i:0">{deck.event}</p>}
+                  <h1 class="heading anim" style="--i:1">{slide.heading}</h1>
+                  {deck.subtitle && <p class="subtitle anim" style="--i:2">{deck.subtitle}</p>}
+                  {deck.date && (
+                    <p class="byline anim" style="--i:3">
+                      <time>{deck.date}</time>
+                    </p>
+                  )}
+                  <div class="profile anim" style="--i:4">
+                    <img class="profile-icon" src={slideProfile.icon} alt="" width="96" height="96" />
+                    <div class="profile-body">
+                      <p class="profile-name">{slideProfile.name}</p>
+                      <ul class="profile-links">
+                        {slideProfile.links.map((link) => {
+                          const icon = profileIcons[link.service];
+                          return (
+                            <li>
+                              <a href={link.href} aria-label={`${icon.label}: ${link.label}`}>
+                                <svg viewBox={icon.viewBox} aria-hidden="true">
+                                  <path fill="currentColor" d={icon.path} />
+                                </svg>
+                                <span>{link.label}</span>
+                              </a>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {slide.kicker && <p class="kicker anim" style="--i:0">{slide.kicker}</p>}
+                  {slide.heading && <h2 class="heading anim" style="--i:0">{slide.heading}</h2>}
+                  {slide.bodyHtml && <div class="body" set:html={slide.bodyHtml} />}
+                  {slide.sourcesHtml && (
+                    <ol class="sources anim" style="--i:9" aria-label="出典" set:html={slide.sourcesHtml} />
+                  )}
+                </>
+              )}
+            </div>
+            <aside class="notes" hidden set:html={slide.notesHtml || '<p class="notes-empty">ノートはありません</p>'} />
+          </section>
+        ))
+      }
+    </main>
+
+    <div class="chrome" aria-hidden="true">
+      <div class="progress"><span></span></div>
+    </div>
+    <nav class="controls" aria-label="スライド操作">
+      <button type="button" data-action="prev" aria-label="前のスライド">←</button>
+      <span class="counter" aria-live="polite"><span data-current>1</span> / {total}</span>
+      <button type="button" data-action="next" aria-label="次のスライド">→</button>
+      <button type="button" data-action="notes" aria-label="ノートを表示" aria-pressed="false">N</button>
+      <button type="button" data-action="presenter" aria-label="発表者ビューを開く">P</button>
+      <button type="button" data-action="fullscreen" aria-label="全画面表示">⛶</button>
+      <select class="theme-select" data-theme-select aria-label="スライドのデザイン">
+        {slideThemes.map((theme) => (
+          <option value={theme} selected={theme === deck.theme}>
+            {themeLabels[theme]}
+          </option>
+        ))}
+      </select>
+      <a href={postPath} class="to-post">記事で読む</a>
+    </nav>
+
+    <div class="notes-panel" hidden>
+      <div class="notes-panel-body"></div>
+    </div>
+
+    <div class="presenter" hidden>
+      <div class="presenter-next">
+        <p class="presenter-label">次のスライド</p>
+        <div class="presenter-next-stage"></div>
+      </div>
+      <div class="presenter-notes">
+        <p class="presenter-label">スピーカーノート</p>
+        <div class="presenter-notes-body"></div>
+      </div>
+      <div class="presenter-meta">
+        <span class="presenter-timer">00:00</span>
+        <button type="button" data-action="reset-timer">タイマーをリセット</button>
+      </div>
+    </div>
+
+    <script>
+      import { startSlides } from '../../lib/slides/runtime';
+      startSlides();
+    </script>
+  </body>
+</html>

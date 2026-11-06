@@ -6,6 +6,32 @@ import { z } from 'zod';
  * src/content.config.ts と CLI の validate で同じ定義を使う。
  */
 
+/**
+ * スライドのプリセット（テンプレート）。
+ * 見た目とアニメーションの組み合わせで、src/styles/slides.css の [data-theme] に対応する。
+ */
+export const slideThemes = [
+  'simple',
+  'keynote',
+  'paper',
+  'pop',
+  'terminal',
+] as const;
+
+export const slidesSchema = z.object({
+  theme: z.enum(slideThemes).default('keynote'),
+  /** 表紙のタイトル（省略時は記事タイトル） */
+  title: z.string().optional(),
+  /** 表紙のサブタイトル（省略時は description） */
+  subtitle: z.string().optional(),
+  /** 登壇イベント名 */
+  event: z.string().optional(),
+  /** 登壇日（省略時は publishDate） */
+  date: z.string().optional(),
+  /** true にするとリスト項目を 1 つずつ表示する */
+  steps: z.boolean().default(false),
+});
+
 export const blogSchema = z.object({
   title: z.string(),
   publishDate: z.string(),
@@ -13,6 +39,11 @@ export const blogSchema = z.object({
   ogImageURL: z.string().optional(),
   twitterCard: z.string().optional(),
   description: z.string().optional(),
+  /** 指定すると /slides/<id> に本文からスライドを生成する。true はすべて既定値 */
+  slides: z
+    .union([z.literal(true), slidesSchema])
+    .optional()
+    .transform((value) => (value === true ? slidesSchema.parse({}) : value)),
   references: z
     .array(
       z.object({
@@ -78,6 +109,8 @@ export function parseOrderedYaml(text: string): Record<string, unknown>[] {
   return items.map((item, order) => ({ ...item, order }));
 }
 
+export type SlideTheme = (typeof slideThemes)[number];
+export type SlidesOptions = z.infer<typeof slidesSchema>;
 export type BlogData = z.infer<typeof blogSchema>;
 export type BlogReference = NonNullable<BlogData['references']>[number];
 export type PoemData = z.infer<typeof poemSchema>;

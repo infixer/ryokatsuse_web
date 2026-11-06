@@ -9,8 +9,10 @@
 /* ---------- 共通 ---------- */
 
 :root {
+  /* Web フォントは読み込まず OS のフォントを使う（HTML に大量の @font-face が入るため） */
   --font-body:
-    var(--font-noto-sans-jp), "Hiragino Sans", "Yu Gothic", sans-serif;
+    "Hiragino Sans", "Hiragino Kaku Gothic ProN", "BIZ UDPGothic", Meiryo,
+    "Noto Sans CJK JP", "Noto Sans JP", system-ui, sans-serif;
   --font-heading: var(--font-body);
   --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   --dur: 0.7s;
@@ -746,7 +748,9 @@ html.is-ready .slide.is-active {
   --code-bg: #00000080;
   --code-inline-bg: #39ff8822;
   --shadow: 0 0 0 1px var(--line);
-  --font-body: var(--font-mono), var(--font-noto-sans-jp), monospace;
+  --font-body:
+    var(--font-mono), "Hiragino Sans", "BIZ UDPGothic", Meiryo,
+    "Noto Sans CJK JP", monospace;
   --slide-from: none;
   --slide-to: none;
   --enter: blink-in;

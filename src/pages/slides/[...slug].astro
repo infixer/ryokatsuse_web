@@ -1,5 +1,4 @@
 ---
-import { Font } from 'astro:assets';
 import { getCollection } from 'astro:content';
 import { slideThemes } from '@infixer/core/schema';
 import { buildDeck } from '../../lib/slides/build';
@@ -43,7 +42,6 @@ const pageTitle = `${deck.title}（スライド）`;
     <meta property="og:url" content={new URL(Astro.url.pathname, Astro.site)} />
     <meta property="og:image" content={new URL(ogImage, Astro.site)} />
     <meta name="twitter:card" content="summary_large_image" />
-    <Font cssVariable="--font-noto-sans-jp" />
   </head>
   <body>
     <main

@@ -92,6 +92,37 @@ const b = 2;
   assert.match(body[2].bodyHtml, /<figcaption>画像の説明<\/figcaption>/);
 });
 
+test('リストとコード・画像は同じスライドに載せない', async () => {
+  const deck = await deckOf(`## 見出し
+
+- 項目1
+- 項目2
+
+例を書くと以下のようになる。
+
+\`\`\`html
+<p>例</p>
+\`\`\`
+
+- コードのあとのリスト
+
+> 引用はリストと同じスライドに載る
+`);
+  const body = deck.slides.slice(1, -1);
+  assert.deepEqual(
+    body.map((s) => [s.layout, s.heading]),
+    [
+      ['bullets', '見出し'],
+      ['code', '見出し'],
+      ['content', '見出し'],
+    ],
+  );
+  assert.match(body[1].notesHtml, /例を書くと/);
+  assert.doesNotMatch(body[0].notesHtml, /例を書くと/);
+  assert.match(body[2].bodyHtml, /コードのあとのリスト/);
+  assert.match(body[2].bodyHtml, /引用はリストと同じスライドに載る/);
+});
+
 test('区切り線で同じ見出しのままスライドを分ける', async () => {
   const deck = await deckOf(`## 見出し
 

@@ -25,6 +25,7 @@ import { createJavaScriptRegexEngine } from 'shiki/engine/javascript';
  * - 段落はスピーカーノート。それ以外（リスト・コード・画像・引用・表・リンクカード・
  *   YouTube などの iframe・X のポスト・生 HTML）は記事に載っているものとしてスライドにも出す
  * - コード・画像・表・埋め込みは 1 枚に 1 つまで。2 つ目が来たら次のスライドに送る
+ * - リストとコード・画像・表・埋め込みも同じスライドに載せない（どちらも場所を取り、はみ出しやすい）
  * - スライドに出すものがない見出しは、段落中の **太字** をキーメッセージとして大きく出す
  */
 
@@ -225,9 +226,8 @@ export function splitIntoDrafts(
     }
     if (block === null) continue;
 
-    const hasHeavy = current.visible.some((v) => HEAVY.has(v.kind));
-    if (HEAVY.has(block.kind) && hasHeavy) {
-      // 2 つ目の重いブロックは次のスライドへ。直前の段落もそちらの説明として持っていく
+    if (conflicts(current.visible, block.kind)) {
+      // 一緒に載せられないブロックは次のスライドへ。直前の段落もそちらの説明として持っていく
       drafts.push(current);
       current = newDraft(current.heading, current.kicker);
     }
@@ -237,6 +237,15 @@ export function splitIntoDrafts(
   }
   flush();
   return drafts;
+}
+
+/** すでにあるブロックと同じスライドに載せるとはみ出しやすい組み合わせか */
+function conflicts(visible: VisibleBlock[], kind: VisibleKind): boolean {
+  const hasHeavy = visible.some((v) => HEAVY.has(v.kind));
+  const hasList = visible.some((v) => v.kind === 'list');
+  if (HEAVY.has(kind)) return hasHeavy || hasList;
+  if (kind === 'list') return hasHeavy;
+  return false;
 }
 
 function newDraft(heading?: string, kicker?: string): Draft {

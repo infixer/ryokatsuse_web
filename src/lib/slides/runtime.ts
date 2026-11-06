@@ -4,7 +4,10 @@
  * - N でノート、P で発表者ビュー（別ウィンドウ。BroadcastChannel で同期）、F で全画面、T でテーマ切り替え
  * - YouTube などの埋め込みは表示中のスライドだけ読み込み、離れたら止める
  * - URL の #3 で 3 枚目から開く。?theme=paper でプリセットを試せる
+ * - はみ出すスライドは文字を縮めて収める（fit.ts）
  */
+
+import { fitSlides } from './fit';
 
 interface Position {
   index: number;
@@ -155,7 +158,25 @@ export function startSlides() {
   function cycleTheme() {
     const current = themes.indexOf(root.dataset.theme ?? '');
     root.dataset.theme = themes[(current + 1) % themes.length];
+    // プリセットで書体や余白が変わるので測り直す
+    fit();
   }
+
+  // はみ出し調整。書体の読み込み・画面サイズの変化・画像の読み込みのあとにも測り直す
+  const fit = () => fitSlides(slides);
+  let fitFrame: number | undefined;
+  const refit = () => {
+    if (fitFrame !== undefined) cancelAnimationFrame(fitFrame);
+    fitFrame = requestAnimationFrame(() => {
+      fitFrame = undefined;
+      fit();
+    });
+  };
+  window.addEventListener('resize', refit);
+  void document.fonts?.ready.then(refit);
+  deck.querySelectorAll('img').forEach((img) => {
+    if (!img.complete) img.addEventListener('load', refit, { once: true });
+  });
 
   document.addEventListener('keydown', (event) => {
     if (event.metaKey || event.ctrlKey || event.altKey) return;
@@ -277,6 +298,8 @@ export function startSlides() {
     if (presenter) presenter.hidden = false;
     setInterval(tick, 1000);
   }
+
+  fit();
 
   const initial = Number(location.hash.slice(1)) - 1;
   render(

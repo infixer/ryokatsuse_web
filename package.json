@@ -16,6 +16,7 @@
     "check": "oxlint && oxfmt --check",
     "test:images": "tsx --test tests/responsive-markdown-images.test.ts",
     "test:slides": "tsx --test tests/slides.test.ts",
+    "test:slides:layout": "tsx --test tests/slides-layout.test.ts",
     "infixer": "infixer",
     "test:cli": "pnpm --filter @infixer/cli test",
     "typecheck:packages": "tsc -p packages/core && tsc -p packages/cli"

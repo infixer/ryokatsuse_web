@@ -3,6 +3,7 @@
  * プリセット（テンプレート）は html[data-theme] で切り替える。
  * 各プリセットは「配色・書体」の変数と「スライド遷移・要素の登場アニメーション」を持つ。
  * サイズはすべてスライドに対するコンテナ単位（cqw / cqh）なので、どの画面でも同じ見た目になる。
+ * 文字の大きさには --fit（既定 1）を掛ける。はみ出すスライドだけ runtime（fit.ts）が小さくする。
  */
 
 /* ---------- 共通 ---------- */
@@ -66,14 +67,14 @@ html:not(.is-ready) .slide:first-child {
   gap: 2.2cqh;
   height: 100%;
   padding: 7cqh 7cqw;
-  font-size: 2.3cqw;
+  font-size: calc(2.3cqw * var(--fit, 1));
   line-height: 1.6;
 }
 
 .kicker,
 .eyebrow {
   margin: 0;
-  font-size: 1.5cqw;
+  font-size: calc(1.5cqw * var(--fit, 1));
   font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--accent);
@@ -82,7 +83,7 @@ html:not(.is-ready) .slide:first-child {
 .heading {
   margin: 0;
   font-family: var(--font-heading);
-  font-size: 4cqw;
+  font-size: calc(4cqw * var(--fit, 1));
   font-weight: 700;
   line-height: 1.3;
   text-wrap: balance;
@@ -92,7 +93,8 @@ html:not(.is-ready) .slide:first-child {
   display: flex;
   flex: 1;
   flex-direction: column;
-  justify-content: center;
+  /* はみ出したときに上に切れないよう safe を付ける */
+  justify-content: safe center;
   gap: 2.5cqh;
   min-height: 0;
 }
@@ -143,7 +145,7 @@ html:not(.is-ready) .slide:first-child {
   overflow: auto;
   border-radius: var(--radius);
   background: var(--code-bg) !important;
-  font-size: 1.45cqw;
+  font-size: calc(1.45cqw * var(--fit, 1));
   line-height: 1.55;
 }
 
@@ -176,14 +178,14 @@ html:not(.is-ready) .slide:first-child {
 }
 
 .body figcaption {
-  font-size: 1.4cqw;
+  font-size: calc(1.4cqw * var(--fit, 1));
   color: var(--muted);
 }
 
 .body table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 1.8cqw;
+  font-size: calc(1.8cqw * var(--fit, 1));
 }
 
 .body th,
@@ -201,7 +203,7 @@ html:not(.is-ready) .slide:first-child {
   margin: 0;
   padding-left: 1em;
   border-left: 0.4cqw solid var(--accent);
-  font-size: 2.8cqw;
+  font-size: calc(2.8cqw * var(--fit, 1));
 }
 
 .card {
@@ -277,14 +279,14 @@ html:not(.is-ready) .slide:first-child {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: color-mix(in srgb, var(--fg) 4%, transparent);
-  font-size: 1.4cqw;
+  font-size: calc(1.4cqw * var(--fit, 1));
   color: var(--muted);
 }
 
 .body blockquote.twitter-tweet::before {
   display: block;
   margin-bottom: 0.4em;
-  font-size: 1.6cqw;
+  font-size: calc(1.6cqw * var(--fit, 1));
   font-weight: 700;
   color: var(--fg);
   content: "𝕏";
@@ -292,7 +294,7 @@ html:not(.is-ready) .slide:first-child {
 
 .body blockquote.twitter-tweet p {
   margin: 0 0 0.8em;
-  font-size: 1.8cqw;
+  font-size: calc(1.8cqw * var(--fit, 1));
   line-height: 1.5;
   color: var(--fg);
 }
@@ -307,22 +309,22 @@ html:not(.is-ready) .slide:first-child {
 .layout-section .slide-inner,
 .layout-statement .slide-inner,
 .layout-end .slide-inner {
-  justify-content: center;
+  justify-content: safe center;
 }
 
 .layout-title .heading {
-  font-size: 5.6cqw;
+  font-size: calc(5.6cqw * var(--fit, 1));
 }
 
 .subtitle {
   margin: 0;
-  font-size: 2.2cqw;
+  font-size: calc(2.2cqw * var(--fit, 1));
   color: var(--muted);
 }
 
 .byline {
   margin: 2cqh 0 0;
-  font-size: 1.6cqw;
+  font-size: calc(1.6cqw * var(--fit, 1));
   color: var(--muted);
 }
 
@@ -385,21 +387,21 @@ html:not(.is-ready) .slide:first-child {
 }
 
 .layout-section .heading {
-  font-size: 6cqw;
+  font-size: calc(6cqw * var(--fit, 1));
 }
 
 .layout-statement .heading {
-  font-size: 5cqw;
+  font-size: calc(5cqw * var(--fit, 1));
 }
 
 .layout-statement:has(.key) .heading {
-  font-size: 2.4cqw;
+  font-size: calc(2.4cqw * var(--fit, 1));
   color: var(--muted);
 }
 
 .key {
   margin: 0;
-  font-size: 4.6cqw;
+  font-size: calc(4.6cqw * var(--fit, 1));
   font-weight: 700;
   line-height: 1.35;
 }
@@ -409,7 +411,7 @@ html:not(.is-ready) .slide:first-child {
 }
 
 .layout-quote .body blockquote {
-  font-size: 3.4cqw;
+  font-size: calc(3.4cqw * var(--fit, 1));
 }
 
 .layout-end .slide-inner {
@@ -418,12 +420,12 @@ html:not(.is-ready) .slide:first-child {
 }
 
 .layout-end .heading {
-  font-size: 5cqw;
+  font-size: calc(5cqw * var(--fit, 1));
 }
 
 .end-link {
   margin: 0;
-  font-size: 1.8cqw;
+  font-size: calc(1.8cqw * var(--fit, 1));
   color: var(--muted);
 }
 

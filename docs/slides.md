@@ -11,7 +11,7 @@
 title: Web IDLって知ってる？
 publishDate: "2026-06-06"
 slides:
-  theme: keynote        # プリセット（下記）。省略時 keynote
+  theme: keynote        # プリセット（simple / keynote / paper / pop / terminal）。省略時 keynote
   event: フロントエンド・PHPカンファレンス北海道2026 LT
   # title / subtitle / date も上書きできる（省略時は記事の title / description / publishDate）
   # steps: true         # リスト項目を 1 つずつ出す
@@ -51,12 +51,17 @@ slides:
 
 見た目とアニメーションのセットです。`src/styles/slides.css` の `[data-theme='…']` で定義しています。
 
-| 名前 | 雰囲気 | スライド遷移 | 要素の出方 |
+| 名前 | 見た目 | スライド遷移 | 要素の出方 |
 | --- | --- | --- | --- |
-| `keynote` | 暗い背景・グラデーション文字 | ふわっと拡大縮小 | ぼかしから浮き上がる |
-| `paper` | 紙っぽい明るい背景・明朝見出し | 横にスライド | 左から拭うように出る・下線が伸びる |
-| `terminal` | 黒地に緑・等幅 | カット（ちらつき） | 見出しが打鍵され、要素が点滅して出る |
-| `pop` | 明るい色・太枠と影 | 下から弾んで入る | ポンと弾んで出る |
+| `simple` | ブログと同じ配色 | なし | なし（アニメーションなし） |
+| `keynote` | ブログと同じ配色 | ふわっと拡大縮小 | ぼかしから浮き上がる |
+| `paper` | ブログと同じ配色 | 横にスライド | 左から拭うように出る・見出しの下線が伸びる |
+| `pop` | ブログと同じ配色 | 下から弾んで入る | ポンと弾んで出る |
+| `terminal` | 黒地に緑・等幅 | カット | 見出しが打鍵され、要素が点滅して出る |
+
+- terminal 以外はブログと同じライト・ダークの配色です。ブログの切り替え（`localStorage` の `theme`）、なければ OS の設定に従います。
+- コードはどのプリセットでも暗い背景（`github-dark-default`）で出します。
+- 文字はどのプリセット・ライト・ダークでも、背景とのコントラスト比 4.5:1 以上（大きな文字は 3:1 以上）にしています。terminal は発光・走査線・画面のちらつきをなくし、カーソルの点滅は 3 回で止めます。
 
 実例：`2026/line-clamp-a11y`（`terminal`）
 
@@ -64,11 +69,11 @@ slides:
 
 - 文字の大きさにはすべて `--fit`（既定 1）が掛かっています。表示時に各スライドを測り、はみ出すスライドだけ収まる大きさまで文字を縮めます（`src/lib/slides/fit.ts`、下限 60%）。書体の読み込み・画面サイズの変化・プリセットの切り替えのあとにも測り直します。
 - 60% まで縮めても収まらないスライドには `data-overflow` が付き、コンソールに警告が出ます。記事に `---` を入れてスライドを分けてください。
-- `pnpm astro build && pnpm test:slides:layout` で、生成したすべてのスライドを全プリセット・2 つの画面サイズでブラウザで開き、はみ出しがないかを確かめます（初回は `pnpm exec playwright install chromium` が必要）。
+- `pnpm astro build && pnpm test:slides:layout` で、生成したすべてのスライドを全プリセット・2 つの画面サイズでブラウザで開き、はみ出しがないかと、全プリセット・ライト・ダークで文字のコントラスト比が足りているかを確かめます（初回は `pnpm exec playwright install chromium` が必要）。
 
-`?theme=paper` を URL に付けるか、スライド上で `T` キーを押すと、記事の設定を変えずに他のプリセットを試せます。
+`?theme=simple` を URL に付けるか、スライド上で `T` キーを押すと、記事の設定を変えずに他のプリセットを試せます。
 
-新しいプリセットを足すときは、`packages/core/src/schema.ts` の `slideThemes` に名前を追加し、`slides.css` に `[data-theme='名前']` で変数（`--bg` `--fg` `--accent` …）と `--enter`（要素の登場アニメーション）・`--slide-from` / `--slide-to`（遷移）を定義します。
+新しいプリセットを足すときは、`packages/core/src/schema.ts` の `slideThemes` に名前を追加し、`slides.css` に `[data-theme='名前']` で `--enter`（要素の登場アニメーション）・`--slide-from` / `--slide-to`（遷移）を定義します。配色は `:root`（ライト）と `:root.dark`（ダーク）の共通の変数を使い、独自の配色にするときだけ terminal のように `:root[data-theme='名前']` で `--bg` `--bg-solid` `--fg` `--muted` `--accent` などを上書きします。
 
 ## 表紙の自己紹介
 

@@ -684,11 +684,16 @@ function stripMdx<T extends RootContent>(nodes: T[]): T[] {
 
 const languages = new Set(Object.keys(bundledLanguages));
 let highlighter: Promise<Highlighter> | undefined;
+/**
+ * コードはどのプリセットでも暗い背景で出す（ブログのコードブロックと同じ）。
+ * github-dark はコメントのコントラスト比が 3:1 ほどしかないので、4.5:1 を満たす github-dark-default を使う
+ */
+const CODE_THEME = 'github-dark-default';
 
 async function highlight(node: Code): Promise<string> {
   // プリレンダーは workerd 上で動き WASM が使えないため、JS の正規表現エンジンを使う
   highlighter ??= createHighlighter({
-    themes: ['github-light', 'github-dark'],
+    themes: [CODE_THEME],
     langs: [],
     engine: createJavaScriptRegexEngine({ forgiving: true }),
   });
@@ -699,9 +704,7 @@ async function highlight(node: Code): Promise<string> {
   }
   return shiki.codeToHtml(node.value.replace(/^\n+|\n+$/g, ''), {
     lang,
-    themes: { light: 'github-light', dark: 'github-dark' },
-    // 色はテーマ側の CSS で --shiki-light / --shiki-dark から選ぶ
-    defaultColor: false,
+    theme: CODE_THEME,
   });
 }
 

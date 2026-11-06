@@ -177,6 +177,103 @@ function findOverflows(page: Page): Promise<Overflow[]> {
   });
 }
 
+interface LowContrast {
+  slide: number;
+  element: string;
+  ratio: number;
+  required: number;
+  colors: string;
+}
+
+/**
+ * 全スライドの文字について、文字色とその下の背景色のコントラスト比を調べる（WCAG 2.x の式）。
+ * 背景は祖先の background-color を重ね、グラデーションの背景は --bg-solid（いちばん明るい色）で代用する。
+ * 大きな文字（24px 以上、または 18.66px 以上の太字）は 3:1、それ以外は 4.5:1 を求める。
+ */
+function findLowContrast(page: Page): Promise<LowContrast[]> {
+  return page.evaluate(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 1;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
+    type RGBA = [number, number, number, number];
+    const toRGBA = (color: string): RGBA => {
+      ctx.clearRect(0, 0, 1, 1);
+      ctx.fillStyle = '#000';
+      ctx.fillStyle = color;
+      ctx.fillRect(0, 0, 1, 1);
+      const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data;
+      return [r, g, b, a / 255];
+    };
+    const over = (top: RGBA, bottom: RGBA): RGBA => {
+      const a = top[3];
+      return [
+        top[0] * a + bottom[0] * (1 - a),
+        top[1] * a + bottom[1] * (1 - a),
+        top[2] * a + bottom[2] * (1 - a),
+        1,
+      ];
+    };
+    const luminance = ([r, g, b]: RGBA) => {
+      const c = [r, g, b].map((v) => {
+        const s = v / 255;
+        return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+      });
+      return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+    };
+    const ratioOf = (a: RGBA, b: RGBA) => {
+      const [l1, l2] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+      return (l1 + 0.05) / (l2 + 0.05);
+    };
+    const hex = (c: RGBA) =>
+      '#' + c.slice(0, 3).map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
+
+    const found: LowContrast[] = [];
+    const slides = [...document.querySelectorAll<HTMLElement>('.deck > .slide')];
+    slides.forEach((slide, index) => {
+      const base = toRGBA(
+        getComputedStyle(slide).getPropertyValue('--bg-solid').trim() || '#fff',
+      );
+      const backgroundOf = (el: HTMLElement): RGBA => {
+        const layers: RGBA[] = [];
+        for (let node: HTMLElement | null = el; node && node !== slide.parentElement; node = node.parentElement) {
+          const style = getComputedStyle(node);
+          // スライド自体の背景（グラデーションのことがある）は --bg-solid で代用する
+          if (node === slide) break;
+          const color = toRGBA(style.backgroundColor);
+          if (color[3] > 0) layers.push(color);
+          if (color[3] === 1) break;
+        }
+        return layers.reduceRight<RGBA>((acc, layer) => over(layer, acc), base);
+      };
+      for (const el of slide.querySelectorAll<HTMLElement>('.slide-inner *')) {
+        const hasText = [...el.childNodes].some(
+          (n) => n.nodeType === Node.TEXT_NODE && n.textContent!.trim() !== '',
+        );
+        if (!hasText) continue;
+        const style = getComputedStyle(el);
+        if (style.display === 'none') continue;
+        const bg = backgroundOf(el);
+        const fg = over(toRGBA(style.color), bg);
+        const size = Number.parseFloat(style.fontSize);
+        const bold = Number(style.fontWeight) >= 700;
+        const required = size >= 24 || (bold && size >= 18.66) ? 3 : 4.5;
+        const ratio = ratioOf(fg, bg);
+        if (ratio + 0.005 < required) {
+          const text = (el.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 24);
+          found.push({
+            slide: index + 1,
+            element: `<${el.tagName.toLowerCase()}${el.className && typeof el.className === 'string' ? `.${el.className.split(' ')[0]}` : ''}> "${text}"`,
+            ratio: Math.round(ratio * 100) / 100,
+            required,
+            colors: `${hex(fg)} / ${hex(bg)}`,
+          });
+        }
+      }
+    });
+    return found;
+  });
+}
+
 const decks = findDecks(slidesDir);
 
 describe('スライドのはみ出し', { skip: decks.length === 0 && 'dist/client/slides がありません。先に pnpm astro build を実行してください' }, () => {
@@ -195,9 +292,14 @@ describe('スライドのはみ出し', { skip: decks.length === 0 && 'dist/clie
     server?.close();
   });
 
-  async function open(path: string, viewport = viewports[0]) {
+  async function open(
+    path: string,
+    viewport = viewports[0],
+    colorScheme: 'light' | 'dark' = 'light',
+  ) {
     const context = await browser.newContext({
       viewport,
+      colorScheme,
       // 登場アニメーション中の移動をはみ出しと見なさないように、動きを止めて測る
       reducedMotion: 'reduce',
     });
@@ -235,6 +337,79 @@ describe('スライドのはみ出し', { skip: decks.length === 0 && 'dist/clie
       }
     }
   }
+
+  for (const deck of decks) {
+    for (const theme of slideThemes) {
+      for (const scheme of ['light', 'dark'] as const) {
+        test(`コントラスト比 ${deck} ${theme} ${scheme}`, async () => {
+          const { page, close } = await open(
+            `${deck}?theme=${theme}`,
+            viewports[0],
+            scheme,
+          );
+          try {
+            const low = await findLowContrast(page);
+            assert.deepEqual(
+              low,
+              [],
+              low
+                .map(
+                  (l) =>
+                    `スライド ${l.slide}: ${l.element} ${l.ratio}:1（${l.required}:1 以上が必要） ${l.colors}`,
+                )
+                .join('\n'),
+            );
+          } finally {
+            await close();
+          }
+        });
+      }
+    }
+  }
+
+  test('コントラスト比の低い文字を検出できる', async () => {
+    const { page, close } = await open(`${decks[0]}?theme=simple`);
+    try {
+      await page.evaluate(() => {
+        const inner = document.querySelectorAll('.deck > .slide')[1].querySelector('.slide-inner')!;
+        inner.insertAdjacentHTML(
+          'beforeend',
+          '<p style="color:#999">薄い文字</p><p style="background:#333;color:#555">暗い背景の暗い文字</p><h2 class="heading" style="color:#888">大きな文字</h2>',
+        );
+      });
+      const low = await findLowContrast(page);
+      assert.deepEqual(
+        low.map((l) => [l.element, l.required]),
+        [
+          ['<p> "薄い文字"', 4.5],
+          ['<p> "暗い背景の暗い文字"', 4.5],
+        ],
+      );
+    } finally {
+      await close();
+    }
+  });
+
+  test('操作バーでデザインを選ぶと切り替わり、URL に残る', async () => {
+    const { page, close } = await open(decks[0]);
+    try {
+      const initial = await page.evaluate(() => document.documentElement.dataset.theme);
+      const other = slideThemes.find((t) => t !== initial)!;
+      await page.selectOption('[data-theme-select]', other);
+      assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), other);
+      assert.equal(new URL(page.url()).searchParams.get('theme'), other);
+      // 再読み込みしても選んだデザインのまま
+      await page.reload();
+      await page.waitForFunction(() => document.documentElement.classList.contains('is-ready'));
+      assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), other);
+      assert.equal(await page.inputValue('[data-theme-select]'), other);
+      // 記事の既定に戻すと ?theme= は外れる
+      await page.selectOption('[data-theme-select]', initial!);
+      assert.equal(new URL(page.url()).searchParams.has('theme'), false);
+    } finally {
+      await close();
+    }
+  });
 
   describe('はみ出したとき', () => {
     const longText = 'とても長い説明文がスライドに入っている。'.repeat(8);

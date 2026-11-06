@@ -78,8 +78,8 @@ html:not(.is-ready) .slide:first-child {
   margin: 0;
   font-size: calc(1.5cqw * var(--fit, 1));
   font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--accent);
+  letter-spacing: 0.04em;
+  color: var(--muted);
 }
 
 .heading {
@@ -106,7 +106,9 @@ html:not(.is-ready) .slide:first-child {
 }
 
 .body a {
-  color: var(--accent);
+  color: var(--fg);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
 }
 
 .body ul,
@@ -120,7 +122,7 @@ html:not(.is-ready) .slide:first-child {
 }
 
 .body li::marker {
-  color: var(--accent);
+  color: var(--muted);
 }
 
 .body code {
@@ -132,6 +134,7 @@ html:not(.is-ready) .slide:first-child {
   padding: 0.1em 0.35em;
   border-radius: 0.3em;
   background: var(--code-inline-bg);
+  color: var(--code-inline-fg);
 }
 
 .block-code {
@@ -149,10 +152,6 @@ html:not(.is-ready) .slide:first-child {
   background: var(--code-bg) !important;
   font-size: calc(1.45cqw * var(--fit, 1));
   line-height: 1.55;
-}
-
-.shiki span {
-  color: var(--shiki-light);
 }
 
 .block-image {
@@ -186,8 +185,20 @@ html:not(.is-ready) .slide:first-child {
 
 .body table {
   width: 100%;
-  border-collapse: collapse;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: calc(1.8cqw * var(--fit, 1));
+}
+
+.body thead {
+  background: var(--surface);
+}
+
+.body tbody tr:nth-child(even) {
+  background: var(--surface-subtle);
 }
 
 .body th,
@@ -195,30 +206,35 @@ html:not(.is-ready) .slide:first-child {
   padding: 0.6em 0.8em;
   border-bottom: 1px solid var(--line);
   text-align: left;
+  vertical-align: top;
 }
 
-.body th {
-  color: var(--accent);
+.body tbody tr:last-child > * {
+  border-bottom: 0;
 }
 
 .body blockquote {
   margin: 0;
-  padding-left: 1em;
-  border-left: 0.4cqw solid var(--accent);
+  padding: 0.6em 1em;
+  border-left: 0.4cqw solid var(--line-strong);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: var(--surface-subtle);
   font-size: calc(2.8cqw * var(--fit, 1));
 }
 
-.card {
+.body blockquote p {
+  margin: 0;
+}
+
+.body .card {
   display: block;
   padding: 2cqh 2cqw;
   border: 1px solid var(--line);
   border-radius: var(--radius);
+  background: var(--bg-solid);
+  color: var(--fg);
   text-decoration: none;
   word-break: break-all;
-}
-
-.card::before {
-  content: "🔗 ";
 }
 
 /* 参照。本文・ノートの <Cite> は [n]、スライドの下に出典、最後に参照一覧 */
@@ -420,7 +436,7 @@ html:not(.is-ready) .slide:first-child {
   border-radius: 50%;
   object-fit: cover;
   background: #fff;
-  box-shadow: 0 0 0 0.25cqw var(--accent);
+  box-shadow: 0 0 0 0.25cqw var(--line-strong);
 }
 
 .profile-name {
@@ -603,19 +619,6 @@ html.is-ready .slide.is-active {
   }
 }
 
-@keyframes flicker {
-  0% {
-    opacity: 0.4;
-    filter: brightness(2);
-  }
-  10% {
-    opacity: 1;
-  }
-  15% {
-    opacity: 0.6;
-  }
-}
-
 @keyframes pop-in {
   0% {
     opacity: 0;
@@ -627,87 +630,81 @@ html.is-ready .slide.is-active {
   }
 }
 
-@keyframes float {
-  50% {
-    transform: translateY(-1.5cqh) rotate(8deg);
-  }
+/* ---------- 配色: ブログと同じライト・ダーク（terminal 以外） ---------- */
+
+/*
+ * html.dark はページ先頭のスクリプトが付ける（ブログと同じく localStorage の theme、なければ OS の設定）。
+ * 色は Tailwind の neutral / sky と同じ値。文字は背景に対して 4.5:1 以上にしている
+ * （tests/slides-layout.test.ts で確かめる）。
+ */
+:root {
+  --outer: oklch(92.2% 0 0);
+  --bg: oklch(100% 0 0);
+  --bg-solid: var(--bg);
+  --fg: oklch(28% 0 0);
+  --muted: oklch(43.9% 0 0);
+  --accent: oklch(50% 0.134 242.749);
+  --line: oklch(92.2% 0 0);
+  --line-strong: oklch(87% 0 0);
+  --surface: oklch(97% 0 0);
+  --surface-subtle: oklch(98.5% 0 0);
+  --code-bg: #0d1117;
+  --code-inline-bg: oklch(37.3% 0.034 259.733);
+  --code-inline-fg: oklch(100% 0 0);
+  --shadow: none;
+  color-scheme: light;
 }
 
-/* ---------- プリセット: keynote（暗い背景・グラデーション・ふわっと浮き上がる） ---------- */
-
-[data-theme="keynote"] {
-  --outer: #05070f;
-  --bg:
-    radial-gradient(120% 90% at 85% 0%, #1d2a5c 0%, transparent 55%),
-    radial-gradient(80% 70% at 0% 100%, #2b1747 0%, transparent 60%), #0b1020;
-  --fg: #e8ecff;
-  --muted: #9aa3c7;
-  --accent: #8ea8ff;
-  --line: #2a3460;
-  --code-bg: #0d1330cc;
-  --code-inline-bg: #ffffff14;
-  --shadow: 0 2cqh 6cqh #0008;
-  --slide-from: scale(1.04);
-  --slide-to: scale(0.96);
-  --enter: fade-up;
+:root.dark {
+  --outer: oklch(20.5% 0 0);
+  --bg: oklch(26.9% 0 0);
+  --fg: oklch(98.5% 0.002 247.839);
+  --muted: oklch(70.8% 0 0);
+  --accent: oklch(74.6% 0.16 232.661);
+  --line: oklch(37.1% 0 0);
+  --line-strong: oklch(43.9% 0 0);
+  --surface: oklch(31% 0 0);
+  --surface-subtle: oklch(29% 0 0);
+  --code-inline-bg: oklch(37.1% 0 0);
   color-scheme: dark;
 }
 
-[data-theme="keynote"] .heading {
-  background: linear-gradient(100deg, #fff 30%, #b9c6ff 70%, #e0b3ff);
-  background-clip: text;
-  color: transparent;
+/* 暗い背景にコードの暗い背景が溶けないよう、ダークでは枠を付ける */
+:root.dark .body pre.shiki {
+  border: 1px solid var(--line);
 }
 
-[data-theme="keynote"] .layout-statement:has(.key) .heading {
-  background: none;
-  color: var(--muted);
+/* ---------- 動き: simple（アニメーションなし） ---------- */
+
+[data-theme="simple"] {
+  --slide-from: none;
+  --slide-to: none;
+  --slide-from-opacity: 0;
+  --enter: none;
 }
 
-[data-theme="keynote"] .key {
-  background: linear-gradient(100deg, #b9c6ff, #f0abfc);
-  background-clip: text;
-  color: transparent;
+html.is-ready[data-theme="simple"] .slide,
+[data-theme="simple"] .slide [data-step] {
+  transition: none;
 }
 
-[data-theme="keynote"] .shiki span,
-[data-theme="terminal"] .shiki span {
-  color: var(--shiki-dark);
+/* ---------- 動き: keynote（ふわっと拡大縮小・ぼかしから浮き上がる） ---------- */
+
+[data-theme="keynote"] {
+  --slide-from: scale(1.04);
+  --slide-to: scale(0.96);
+  --enter: fade-up;
 }
 
-/* ---------- プリセット: paper（紙っぽい明るい背景・左から右へ拭うように） ---------- */
+/* ---------- 動き: paper（横にスライド・左から拭うように出る・見出しの下線が伸びる） ---------- */
 
 [data-theme="paper"] {
-  --outer: #e7e1d3;
-  --bg: #f8f4ea;
-  --fg: #1f1d1a;
-  --muted: #6b6459;
-  --accent: #c2410c;
-  --line: #d9d0bd;
-  --code-bg: #fffdf7;
-  --code-inline-bg: #ece4d2;
-  --shadow: 0 1cqh 3cqh #0000001f;
-  --font-heading: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
   --slide-from: translateX(100%);
   --slide-to: translateX(-100%);
   --slide-from-opacity: 1;
   --enter: wipe;
   --dur: 0.8s;
   --ease: cubic-bezier(0.65, 0, 0.35, 1);
-  color-scheme: light;
-}
-
-[data-theme="paper"] .slide-inner {
-  padding-left: 9cqw;
-}
-
-[data-theme="paper"] .slide-inner::before {
-  position: absolute;
-  inset: 0 auto 0 4.5cqw;
-  width: 1px;
-  background: var(--accent);
-  opacity: 0.4;
-  content: "";
 }
 
 [data-theme="paper"] .heading {
@@ -721,33 +718,53 @@ html.is-ready .slide.is-active {
   left: 0;
   width: 3em;
   height: 0.5cqh;
-  background: var(--accent);
+  background: var(--fg);
   transform-origin: left;
   content: "";
+}
+
+[data-theme="paper"] .layout-end .heading::after {
+  right: 0;
+  margin: 0 auto;
 }
 
 [data-theme="paper"] .slide.is-active .heading::after {
   animation: draw-line 0.9s var(--ease) 0.5s both;
 }
 
-[data-theme="paper"] .body pre.shiki {
-  border: 1px solid var(--line);
+/* ---------- 動き: pop（下から弾んで入る・ポンと弾んで出る） ---------- */
+
+[data-theme="pop"] {
+  --slide-from: translateY(110%) rotate(4deg);
+  --slide-to: translateY(-110%) rotate(-4deg);
+  --enter: pop-in;
+  --ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur: 0.65s;
 }
 
 /* ---------- プリセット: terminal（黒地に緑・打鍵するように出る） ---------- */
 
-[data-theme="terminal"] {
+/*
+ * アクセシビリティのために
+ * - 文字はすべて背景に対して 4.5:1 以上（いちばん明るい背景の色 --bg-solid で確かめる）
+ * - 走査線や発光（text-shadow）は文字の輪郭をぼかすので付けない
+ * - 画面全体を明るく点滅させない（光過敏への配慮）
+ * - カーソルは 3 回だけ点滅して止める（5 秒を超えて点滅し続けない。WCAG 2.2.2）
+ */
+:root[data-theme="terminal"] {
   --outer: #000;
-  --bg:
-    repeating-linear-gradient(0deg, #ffffff06 0 1px, transparent 1px 3px),
-    radial-gradient(ellipse at center, #0f1f13 0%, #050805 80%);
-  --fg: #b6f7c1;
-  --muted: #5fae75;
-  --accent: #39ff88;
-  --line: #1f4a2b;
-  --code-bg: #00000080;
-  --code-inline-bg: #39ff8822;
-  --shadow: 0 0 0 1px var(--line);
+  --bg: radial-gradient(ellipse at center, #0c140e 0%, #050805 80%);
+  --bg-solid: #0c140e;
+  --fg: #d7fbe0;
+  --muted: #8fd6a4;
+  --accent: #4cff95;
+  --line: #2f6b43;
+  --line-strong: #3f8a58;
+  --surface: #0f1f15;
+  --surface-subtle: #0a150e;
+  --code-bg: #0d1117;
+  --code-inline-bg: #13301e;
+  --code-inline-fg: var(--fg);
   --font-body:
     var(--font-mono), "Hiragino Sans", "BIZ UDPGothic", Meiryo,
     "Noto Sans CJK JP", monospace;
@@ -764,9 +781,12 @@ html.is-ready[data-theme="terminal"] .slide {
   transition: visibility 0s;
 }
 
-[data-theme="terminal"] .slide.is-active {
-  animation: flicker 0.4s linear;
-  text-shadow: 0 0 0.6cqw #39ff8866;
+[data-theme="terminal"] .body pre.shiki {
+  border: 1px solid var(--line);
+}
+
+[data-theme="terminal"] :is(.kicker, .eyebrow) {
+  color: var(--accent);
 }
 
 [data-theme="terminal"] .kicker::before {
@@ -783,7 +803,10 @@ html.is-ready[data-theme="terminal"] .slide {
   content: "▋";
   margin-left: 0.15em;
   color: var(--accent);
-  animation: caret 1s steps(1) infinite;
+}
+
+[data-theme="terminal"] .slide.is-active .heading::after {
+  animation: caret 1s steps(1) 3;
 }
 
 [data-theme="terminal"] .slide.is-active .heading {
@@ -792,108 +815,20 @@ html.is-ready[data-theme="terminal"] .slide {
 
 [data-theme="terminal"] .body li::marker {
   content: "- ";
+  color: var(--accent);
 }
 
-/* ---------- プリセット: pop（明るい色・太い枠・弾むように） ---------- */
-
-[data-theme="pop"] {
-  --outer: #ffd84d;
-  --bg: #fffaf0;
-  --fg: #1b1b1b;
-  --muted: #5a5a5a;
-  --accent: #ff5a5f;
-  --line: #1b1b1b;
-  --code-bg: #fff;
-  --code-inline-bg: #ffe9a8;
-  --shadow: 0.6cqw 0.6cqw 0 #1b1b1b;
-  --slide-from: translateY(110%) rotate(4deg);
-  --slide-to: translateY(-110%) rotate(-4deg);
-  --enter: pop-in;
-  --ease: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --dur: 0.65s;
-  --radius: 1.6cqw;
-  color-scheme: light;
+[data-theme="terminal"] .body a,
+[data-theme="terminal"] .body .card {
+  color: var(--accent);
 }
 
-[data-theme="pop"] .slide {
-  border: 0.4cqw solid var(--line);
-  border-radius: 2cqw;
+[data-theme="terminal"] .body th {
+  color: var(--accent);
 }
 
-/* 飾りの丸は文字だけのスライドに出す（動画や図に重ならないように） */
-[data-theme="pop"]
-  :is(.layout-title, .layout-section, .layout-statement, .layout-end)
-  .slide-inner::after {
-  position: absolute;
-  top: 5cqh;
-  right: 5cqw;
-  width: 7cqw;
-  aspect-ratio: 1;
-  border: 0.4cqw solid var(--line);
-  border-radius: 50%;
-  background: #3a86ff;
-  box-shadow: var(--shadow);
-  content: "";
-}
-
-[data-theme="pop"]
-  .slide.is-active:is(
-    .layout-title,
-    .layout-section,
-    .layout-statement,
-    .layout-end
-  )
-  .slide-inner::after {
-  animation:
-    pop-in 0.6s var(--ease) 0.3s both,
-    float 4s ease-in-out 1s infinite;
-}
-
-[data-theme="pop"] .kicker {
-  align-self: flex-start;
-  padding: 0.3em 0.9em;
-  border: 0.25cqw solid var(--line);
-  border-radius: 999px;
-  background: #ffd84d;
-  color: var(--fg);
-}
-
-[data-theme="pop"]
-  :is(.layout-title, .layout-section, .layout-statement)
-  .heading {
-  margin-right: 10cqw;
-}
-
-[data-theme="pop"] .profile {
-  border: 0.3cqw solid var(--line);
-  background: #fff;
-  box-shadow: var(--shadow);
-}
-
-[data-theme="pop"] .profile-icon {
-  box-shadow: 0 0 0 0.3cqw var(--line);
-}
-
-[data-theme="pop"] .key {
-  align-self: flex-start;
-  padding: 0.2em 0.6em;
-  border: 0.4cqw solid var(--line);
-  border-radius: var(--radius);
-  background: #ffd84d;
-  box-shadow: var(--shadow);
-}
-
-[data-theme="pop"] .body pre.shiki,
-[data-theme="pop"] .card,
-[data-theme="pop"] .embed,
-[data-theme="pop"] .body blockquote.twitter-tweet,
-[data-theme="pop"] .body table {
-  border: 0.3cqw solid var(--line);
-  box-shadow: var(--shadow);
-}
-
-[data-theme="pop"] .body blockquote:not(.twitter-tweet) {
-  border-left-width: 0.8cqw;
+[data-theme="terminal"] .body blockquote {
+  border-left-color: var(--accent);
 }
 
 /* ---------- 操作 UI ---------- */
@@ -968,6 +903,22 @@ html.show-ui .controls {
   background: color-mix(in srgb, var(--fg) 15%, transparent);
 }
 
+.theme-select {
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid color-mix(in srgb, var(--fg) 25%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.theme-select option {
+  background: var(--bg-solid);
+  color: var(--fg);
+}
+
 .controls :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
@@ -1007,13 +958,33 @@ html.show-ui .controls {
 
 /* ---------- 発表者ビュー（?presenter） ---------- */
 
+/*
+ * 左の列: 上に今のスライド、その下に次のスライド（今の半分の幅）とタイマー
+ * 右の列: スピーカーノート（縦いっぱい）
+ * --stage-w は今のスライドの幅。左の列（58vw）に収まり、かつ次のスライドまで縦に収まる大きさにする
+ *   縦: 16 + 今(W*9/16) + 24 + 見出し 20 + 次(W/2*9/16) + 16 = 100vh → W = (100vh - 76px) / 0.84375
+ */
+html.is-presenter {
+  --stage-w: min(58vw - 24px, (100vh - 76px) * 1.185);
+  --stage-h: calc(var(--stage-w) * 9 / 16);
+  --next-top: calc(16px + var(--stage-h) + 24px);
+}
+
 html.is-presenter body {
   background: #111;
   color: #eee;
 }
 
 html.is-presenter .deck {
-  inset: 16px 38% 30% 16px;
+  inset: auto;
+  top: 16px;
+  left: 16px;
+  width: var(--stage-w);
+  height: var(--stage-h);
+}
+
+html.is-presenter .deck > .slide {
+  margin: 0;
 }
 
 html.is-presenter .controls {
@@ -1041,15 +1012,16 @@ html.is-presenter .progress {
 .presenter-label {
   margin: 0 0 8px;
   font-size: 12px;
+  line-height: 1;
   letter-spacing: 0.08em;
   opacity: 0.6;
 }
 
 .presenter-next {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  width: calc(38% - 32px);
+  top: var(--next-top);
+  left: 16px;
+  width: calc(var(--stage-w) / 2);
 }
 
 .presenter-next-stage {
@@ -1065,21 +1037,34 @@ html.is-presenter .progress {
 
 .presenter-notes {
   position: absolute;
-  right: 38%;
-  bottom: 70px;
-  left: 16px;
-  height: calc(30% - 90px);
+  top: 16px;
+  right: 16px;
+  bottom: 64px;
+  left: calc(16px + var(--stage-w) + 24px);
+  display: flex;
+  flex-direction: column;
+}
+
+.presenter-notes-body {
+  flex: 1;
+  min-height: 0;
+  padding-right: 8px;
   overflow: auto;
   font-size: 18px;
   line-height: 1.8;
 }
 
+.presenter-notes-body > :first-child {
+  margin-top: 0;
+}
+
 .presenter-meta {
   position: absolute;
-  bottom: 16px;
-  left: 16px;
+  top: calc(var(--next-top) + 20px);
+  left: calc(16px + var(--stage-w) / 2 + 24px);
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 12px;
 }
 

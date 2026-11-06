@@ -10,7 +10,13 @@ import { z } from 'zod';
  * スライドのプリセット（テンプレート）。
  * 見た目とアニメーションの組み合わせで、src/styles/slides.css の [data-theme] に対応する。
  */
-export const slideThemes = ['keynote', 'paper', 'terminal', 'pop'] as const;
+export const slideThemes = [
+  'simple',
+  'keynote',
+  'paper',
+  'pop',
+  'terminal',
+] as const;
 
 export const slidesSchema = z.object({
   theme: z.enum(slideThemes).default('keynote'),

@@ -28,6 +28,14 @@ const deck = await buildDeck({
 const total = deck.slides.length;
 const ogImage = entry.data.ogImageURL || `/og/${entry.id.replace(/\//g, '-')}.png`;
 const pageTitle = `${deck.title}（スライド）`;
+// 操作バーのデザイン選択に出す名前
+const themeLabels: Record<(typeof slideThemes)[number], string> = {
+  simple: 'simple（動きなし）',
+  keynote: 'keynote（ふわっと）',
+  paper: 'paper（横に流れる）',
+  pop: 'pop（弾む）',
+  terminal: 'terminal（端末風）',
+};
 ---
 
 <html lang="ja" data-theme={deck.theme}>
@@ -42,6 +50,21 @@ const pageTitle = `${deck.title}（スライド）`;
     <meta property="og:url" content={new URL(Astro.url.pathname, Astro.site)} />
     <meta property="og:image" content={new URL(ogImage, Astro.site)} />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="color-scheme" content="light dark" />
+    <!-- ブログと同じく localStorage の theme（light / dark）、なければ OS の設定でダークにする -->
+    <script is:inline>
+      (() => {
+        let stored = null;
+        try {
+          stored = localStorage.getItem('theme');
+        } catch {}
+        const dark =
+          stored === 'light' || stored === 'dark'
+            ? stored === 'dark'
+            : matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.classList.toggle('dark', dark);
+      })();
+    </script>
   </head>
   <body>
     <main
@@ -119,6 +142,13 @@ const pageTitle = `${deck.title}（スライド）`;
       <button type="button" data-action="notes" aria-label="ノートを表示" aria-pressed="false">N</button>
       <button type="button" data-action="presenter" aria-label="発表者ビューを開く">P</button>
       <button type="button" data-action="fullscreen" aria-label="全画面表示">⛶</button>
+      <select class="theme-select" data-theme-select aria-label="スライドのデザイン">
+        {slideThemes.map((theme) => (
+          <option value={theme} selected={theme === deck.theme}>
+            {themeLabels[theme]}
+          </option>
+        ))}
+      </select>
       <a href={postPath} class="to-post">記事で読む</a>
     </nav>
 

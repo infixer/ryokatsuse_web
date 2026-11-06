@@ -1,7 +1,8 @@
 /**
  * スライドページのクライアント側の動き。
  * - ←→・Space・PageUp/Down・Home/End・スワイプ・クリックで移動
- * - N でノート、P で発表者ビュー（別ウィンドウ。BroadcastChannel で同期）、F で全画面、T でテーマ切り替え
+ * - N でノート、P で発表者ビュー（別ウィンドウ。BroadcastChannel で同期）、F で全画面
+ * - デザイン（プリセット）は操作バーの選択か T キーで切り替える。URL の ?theme= に残し、発表者ビューとも同期する
  * - YouTube などの埋め込みは表示中のスライドだけ読み込み、離れたら止める
  * - URL の #3 で 3 枚目から開く。?theme=paper でプリセットを試せる
  * - はみ出すスライドは文字を縮めて収める（fit.ts）
@@ -13,6 +14,9 @@ interface Position {
   index: number;
   step: number;
 }
+
+/** 発表者ビューとやりとりするメッセージ */
+type Message = Position | { theme: string };
 
 export function startSlides() {
   const deck = document.querySelector<HTMLElement>('.deck');
@@ -40,9 +44,11 @@ export function startSlides() {
   );
   const timerLabel = document.querySelector<HTMLElement>('.presenter-timer');
 
-  const themeParam = params.get('theme');
-  if (themeParam && themes.includes(themeParam))
-    root.dataset.theme = themeParam;
+  const themeSelect = document.querySelector<HTMLSelectElement>(
+    '[data-theme-select]',
+  );
+  // 記事の frontmatter で指定したプリセット。これを選んだときは URL から ?theme= を外す
+  const defaultTheme = root.dataset.theme ?? themes[0];
 
   const stepsOf = (index: number) => Number(slides[index]?.dataset.steps ?? 0);
   let position: Position = { index: -1, step: 0 };
@@ -155,12 +161,44 @@ export function startSlides() {
     else void root.requestFullscreen?.();
   }
 
-  function cycleTheme() {
-    const current = themes.indexOf(root.dataset.theme ?? '');
-    root.dataset.theme = themes[(current + 1) % themes.length];
+  function setTheme(theme: string, { broadcast = true } = {}) {
+    if (!themes.includes(theme)) return;
+    root.dataset.theme = theme;
+    if (themeSelect) themeSelect.value = theme;
+    const url = new URL(location.href);
+    if (theme === defaultTheme) url.searchParams.delete('theme');
+    else url.searchParams.set('theme', theme);
+    history.replaceState(null, '', url);
     // プリセットで書体や余白が変わるので測り直す
     fit();
+    if (broadcast) channel?.postMessage({ theme } satisfies Message);
   }
+
+  function cycleTheme() {
+    const current = themes.indexOf(root.dataset.theme ?? '');
+    setTheme(themes[(current + 1) % themes.length]);
+  }
+
+  themeSelect?.addEventListener('change', () => setTheme(themeSelect.value));
+
+  // ライト・ダークはブログの設定（localStorage の theme）と OS の設定に追従する
+  const darkMedia = matchMedia('(prefers-color-scheme: dark)');
+  const applyColorScheme = () => {
+    let stored: string | null = null;
+    try {
+      stored = localStorage.getItem('theme');
+    } catch {}
+    root.classList.toggle(
+      'dark',
+      stored === 'light' || stored === 'dark'
+        ? stored === 'dark'
+        : darkMedia.matches,
+    );
+  };
+  darkMedia.addEventListener('change', applyColorScheme);
+  window.addEventListener('storage', (event) => {
+    if (event.key === 'theme') applyColorScheme();
+  });
 
   // はみ出し調整。書体の読み込み・画面サイズの変化・画像の読み込みのあとにも測り直す
   const fit = () => fitSlides(slides);
@@ -182,7 +220,7 @@ export function startSlides() {
     if (event.metaKey || event.ctrlKey || event.altKey) return;
     if (
       (event.target as HTMLElement).closest(
-        'input, textarea, [contenteditable]',
+        'input, textarea, select, [contenteditable]',
       )
     )
       return;
@@ -273,8 +311,9 @@ export function startSlides() {
     hideTimer = window.setTimeout(() => root.classList.remove('show-ui'), 2000);
   });
 
-  channel?.addEventListener('message', (event: MessageEvent<Position>) => {
-    render(event.data, { broadcast: false });
+  channel?.addEventListener('message', (event: MessageEvent<Message>) => {
+    if ('theme' in event.data) setTheme(event.data.theme, { broadcast: false });
+    else render(event.data, { broadcast: false });
   });
 
   window.addEventListener('hashchange', () => {
@@ -299,7 +338,10 @@ export function startSlides() {
     setInterval(tick, 1000);
   }
 
-  fit();
+  const themeParam = params.get('theme');
+  if (themeParam && themes.includes(themeParam))
+    setTheme(themeParam, { broadcast: false });
+  else fit();
 
   const initial = Number(location.hash.slice(1)) - 1;
   render(

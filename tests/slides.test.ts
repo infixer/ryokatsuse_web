@@ -234,3 +234,56 @@ test('steps: true ならリスト項目に順番が付く', async () => {
 test('frontmatter の slides: true は既定値で埋まる', () => {
   assert.deepEqual(slidesSchema.parse({}), { theme: 'keynote', steps: false });
 });
+
+test('<Cite> は記事と同じ番号の [n] になり、スライドの下に出典、最後に参照一覧が付く', async () => {
+  const references = [
+    { id: 'a', title: '参照A', url: 'https://example.com/a', description: 'Aの説明' },
+    { url: 'https://example.com/b' },
+    { id: 'c', title: '参照C', url: 'https://example.com/c' },
+  ];
+  const deck = await buildDeck({
+    body: `import Cite from '../Cite.astro';
+
+## 見出し
+
+段落で参照する<Cite id="c" />。
+
+- リストでも参照する<Cite id="a" />
+
+## 参照なし
+
+- 項目
+`,
+    mdx: true,
+    title: '記事タイトル',
+    options,
+    references,
+  });
+  assert.deepEqual(
+    deck.slides.map((s) => [s.layout, s.heading]),
+    [
+      ['title', '記事タイトル'],
+      ['bullets', '見出し'],
+      ['bullets', '参照なし'],
+      ['references', '参照'],
+      ['end', 'ありがとうございました'],
+    ],
+  );
+  const [, cited, plain, list] = deck.slides;
+  // 番号は frontmatter の並び順
+  assert.match(
+    cited.notesHtml,
+    /段落で参照する<sup class="cite"><a href="https:\/\/example.com\/c" title="参照C">\[3\]<\/a><\/sup>/,
+  );
+  assert.match(cited.bodyHtml, /<sup class="cite"><a [^>]*>\[1\]<\/a><\/sup>/);
+  // 出典は番号順
+  assert.match(cited.sourcesHtml ?? '', /\[1\][\s\S]*参照A[\s\S]*\[3\][\s\S]*参照C/);
+  assert.equal(plain.sourcesHtml, undefined);
+  // 参照一覧はすべての参照を並べる（title がなければ URL）
+  assert.match(list.bodyHtml, /参照A[\s\S]*Aの説明[\s\S]*example\.com\/b[\s\S]*参照C/);
+});
+
+test('references がなければ参照一覧のスライドは付かない', async () => {
+  const deck = await deckOf('## 見出し\n\n- 項目\n');
+  assert.ok(deck.slides.every((s) => s.layout !== 'references'));
+});

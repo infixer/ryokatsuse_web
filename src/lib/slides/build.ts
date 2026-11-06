@@ -1,4 +1,4 @@
-import type { SlidesOptions } from '@infixer/core/schema';
+import type { BlogReference, SlidesOptions } from '@infixer/core/schema';
 import type { Element, ElementContent, Root as HastRoot } from 'hast';
 import { toHtml } from 'hast-util-to-html';
 import type { Code, Image, Paragraph, Root, RootContent } from 'mdast';
@@ -27,6 +27,8 @@ import { createJavaScriptRegexEngine } from 'shiki/engine/javascript';
  * - コード・画像・表・埋め込みは 1 枚に 1 つまで。2 つ目が来たら次のスライドに送る
  * - リストとコード・画像・表・埋め込みも同じスライドに載せない（どちらも場所を取り、はみ出しやすい）
  * - スライドに出すものがない見出しは、段落中の **太字** をキーメッセージとして大きく出す
+ * - `<Cite id="..." />` は記事と同じ番号の [n]（参照先へのリンク）にし、そのスライドの下に出典を出す。
+ *   frontmatter の references があれば、最後のスライドの前に参照一覧のスライドを付ける
  */
 
 export type SlideLayout =
@@ -40,6 +42,7 @@ export type SlideLayout =
   | 'table'
   | 'embed'
   | 'content'
+  | 'references'
   | 'end';
 
 export interface Slide {
@@ -52,6 +55,8 @@ export interface Slide {
   bodyHtml: string;
   /** スピーカーノートの HTML */
   notesHtml: string;
+  /** スライドの下に小さく出す出典（本文・ノートの <Cite> が指す参照）の HTML */
+  sourcesHtml?: string;
   /** 1 つずつ表示する項目の数（steps 有効時のみ 1 以上） */
   steps: number;
 }
@@ -76,6 +81,15 @@ export interface BuildDeckInput {
   options: SlidesOptions;
   /** 最後のスライドに出す記事の URL */
   postUrl?: string;
+  /** frontmatter の references。<Cite> の番号と参照一覧のスライドに使う */
+  references?: BlogReference[];
+}
+
+/** <Cite> を置き換えたノードに持たせる参照の情報 */
+interface Citation {
+  n: number;
+  title: string;
+  url: string;
 }
 
 /** スライドに出すブロック（段落以外） */
@@ -116,6 +130,8 @@ const HEAVY: ReadonlySet<VisibleKind> = new Set([
 
 export async function buildDeck(input: BuildDeckInput): Promise<Deck> {
   const tree = parse(input.body, input.mdx);
+  const references = input.references ?? [];
+  replaceCites(tree, references);
   const drafts = splitIntoDrafts(tree.children, input.body);
   const { options } = input;
 
@@ -139,6 +155,9 @@ export async function buildDeck(input: BuildDeckInput): Promise<Deck> {
   }
   for (const draft of drafts) {
     slides.push(await toSlide(draft, options));
+  }
+  if (references.length > 0) {
+    slides.push(referencesSlide(references));
   }
   slides.push({
     layout: 'end',
@@ -382,6 +401,10 @@ function isImageParagraph(node: Paragraph): boolean {
 
 async function toSlide(draft: Draft, options: SlidesOptions): Promise<Slide> {
   const notesHtml = await renderBlocks(draft.notes);
+  const sourcesHtml = renderSources([
+    ...draft.visible.map((block) => block.node),
+    ...draft.notes,
+  ]);
   if (draft.visible.length === 0) {
     if (draft.isSectionHead) {
       return {
@@ -389,6 +412,7 @@ async function toSlide(draft: Draft, options: SlidesOptions): Promise<Slide> {
         heading: draft.heading,
         bodyHtml: '',
         notesHtml,
+        sourcesHtml,
         steps: 0,
       };
     }
@@ -409,6 +433,7 @@ async function toSlide(draft: Draft, options: SlidesOptions): Promise<Slide> {
       kicker: draft.kicker,
       bodyHtml,
       notesHtml,
+      sourcesHtml,
       steps: 0,
     };
   }
@@ -451,7 +476,102 @@ async function toSlide(draft: Draft, options: SlidesOptions): Promise<Slide> {
     kicker: draft.kicker,
     bodyHtml: parts.join(''),
     notesHtml,
+    sourcesHtml,
     steps,
+  };
+}
+
+/**
+ * <Cite id="..." /> を、記事と同じ番号の [n]（参照先へのリンク）に置き換える。
+ * references にない id は記事のビルドで止まるので、ここでは落とすだけにする
+ */
+function replaceCites(tree: Root, references: BlogReference[]) {
+  const walk = (parent: { children: RootContent[] }) => {
+    parent.children = parent.children.map((node) => {
+      if (
+        (node.type === 'mdxJsxTextElement' ||
+          node.type === 'mdxJsxFlowElement') &&
+        node.name === 'Cite'
+      ) {
+        const id = node.attributes.find(
+          (attr) => 'name' in attr && attr.name === 'id',
+        )?.value;
+        const index = references.findIndex((ref) => ref.id === id);
+        if (index === -1) return node;
+        const reference = references[index];
+        const citation: Citation = {
+          n: index + 1,
+          title: reference.title ?? reference.url,
+          url: reference.url,
+        };
+        return {
+          type: 'emphasis',
+          data: {
+            hName: 'sup',
+            hProperties: { className: ['cite'] },
+            citation,
+          },
+          children: [
+            {
+              type: 'link',
+              url: reference.url,
+              title: citation.title,
+              children: [{ type: 'text', value: `[${citation.n}]` }],
+            },
+          ],
+        } as RootContent;
+      }
+      if ('children' in node) walk(node as { children: RootContent[] });
+      return node;
+    });
+  };
+  walk(tree);
+}
+
+/** ノードの中の <Cite> が指す参照を、番号順に出典として並べる */
+function renderSources(nodes: RootContent[]): string | undefined {
+  const found = new Map<number, Citation>();
+  const walk = (node: RootContent) => {
+    const citation = (node.data as { citation?: Citation } | undefined)
+      ?.citation;
+    if (citation) found.set(citation.n, citation);
+    if ('children' in node)
+      node.children.forEach((child) => walk(child as RootContent));
+  };
+  nodes.forEach(walk);
+  if (found.size === 0) return undefined;
+  return [...found.values()]
+    .sort((a, b) => a.n - b.n)
+    .map(
+      (c) =>
+        `<li><span class="sources-n">[${c.n}]</span> <a href="${escapeAttr(c.url)}">${escapeHtml(c.title)}</a></li>`,
+    )
+    .join('');
+}
+
+/** frontmatter の references を一覧にしたスライド */
+function referencesSlide(references: BlogReference[]): Slide {
+  const items = references
+    .map((reference, index) => {
+      const title = reference.title ?? reference.url;
+      const url = reference.url.replace(/^https?:\/\//, '');
+      return `<li style="--i:${index + 1}"><a href="${escapeAttr(reference.url)}">${escapeHtml(title)}</a>${
+        reference.title
+          ? `<span class="reference-url">${escapeHtml(url)}</span>`
+          : ''
+      }${
+        reference.description
+          ? `<span class="reference-description">${escapeHtml(reference.description)}</span>`
+          : ''
+      }</li>`;
+    })
+    .join('');
+  return {
+    layout: 'references',
+    heading: '参照',
+    bodyHtml: `<div class="block block-list anim" style="--i:1"><ol class="reference-list">${items}</ol></div>`,
+    notesHtml: '',
+    steps: 0,
   };
 }
 

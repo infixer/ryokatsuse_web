@@ -24,6 +24,7 @@ const deck = await buildDeck({
   publishDate: entry.data.publishDate,
   options,
   postUrl: postPath,
+  references: entry.data.references,
 });
 const total = deck.slides.length;
 const ogImage = entry.data.ogImageURL || `/og/${entry.id.replace(/\//g, '-')}.png`;
@@ -98,6 +99,9 @@ const pageTitle = `${deck.title}（スライド）`;
                   {slide.kicker && <p class="kicker anim" style="--i:0">{slide.kicker}</p>}
                   {slide.heading && <h2 class="heading anim" style="--i:0">{slide.heading}</h2>}
                   {slide.bodyHtml && <div class="body" set:html={slide.bodyHtml} />}
+                  {slide.sourcesHtml && (
+                    <ol class="sources anim" style="--i:9" aria-label="出典" set:html={slide.sourcesHtml} />
+                  )}
                 </>
               )}
             </div>

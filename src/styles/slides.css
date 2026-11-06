@@ -219,6 +219,74 @@ html:not(.is-ready) .slide:first-child {
   content: "🔗 ";
 }
 
+/* 参照。本文・ノートの <Cite> は [n]、スライドの下に出典、最後に参照一覧 */
+
+.cite {
+  font-size: 0.6em;
+  line-height: 0;
+}
+
+.cite a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+/* 出典はスライドの下端に置く。中央寄せのレイアウトでは、残りの中身を上下の余白の間に置く */
+.slide-inner:has(> .sources) > :first-child {
+  margin-top: auto;
+}
+
+.sources {
+  display: flex;
+  margin-top: auto;
+  flex-wrap: wrap;
+  gap: 0.2em 1.6em;
+  margin-bottom: 0;
+  padding: 1cqh 0 0;
+  border-top: 1px solid var(--line);
+  list-style: none;
+  font-size: calc(1.2cqw * var(--fit, 1));
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.sources a {
+  color: inherit;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.sources-n {
+  color: var(--accent);
+}
+
+.reference-list {
+  font-size: calc(1.9cqw * var(--fit, 1));
+}
+
+.reference-list li::marker {
+  font-weight: 700;
+}
+
+.reference-list a {
+  color: var(--fg);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.reference-url,
+.reference-description {
+  display: block;
+  font-size: 0.75em;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.reference-url {
+  font-family: var(--font-mono);
+  color: var(--accent);
+}
+
 /* 埋め込み（YouTube・Speaker Deck など）。ブロックの大きさに収まる最大の比率で置く */
 
 .block-embed {

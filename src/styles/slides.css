@@ -1,0 +1,926 @@
+/*
+ * ブログ記事から生成するスライドのスタイル。
+ * プリセット（テンプレート）は html[data-theme] で切り替える。
+ * 各プリセットは「配色・書体」の変数と「スライド遷移・要素の登場アニメーション」を持つ。
+ * サイズはすべてスライドに対するコンテナ単位（cqw / cqh）なので、どの画面でも同じ見た目になる。
+ */
+
+/* ---------- 共通 ---------- */
+
+:root {
+  --font-body:
+    var(--font-noto-sans-jp), "Hiragino Sans", "Yu Gothic", sans-serif;
+  --font-heading: var(--font-body);
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --dur: 0.7s;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --stagger: 0.09s;
+  --delay: 0.15s;
+  --radius: 1.2cqw;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--outer);
+  color: var(--fg);
+  font-family: var(--font-body);
+}
+
+.deck {
+  position: fixed;
+  inset: 0;
+  container-type: size;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: min(100cqw, 100cqh * 16 / 9);
+  aspect-ratio: 16 / 9;
+  container-type: size;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--fg);
+  visibility: hidden;
+}
+
+.slide.is-active,
+html:not(.is-ready) .slide:first-child {
+  visibility: visible;
+}
+
+.slide-inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2.2cqh;
+  height: 100%;
+  padding: 7cqh 7cqw;
+  font-size: 2.3cqw;
+  line-height: 1.6;
+}
+
+.kicker,
+.eyebrow {
+  margin: 0;
+  font-size: 1.5cqw;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+
+.heading {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 4cqw;
+  font-weight: 700;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2.5cqh;
+  min-height: 0;
+}
+
+.block {
+  min-height: 0;
+}
+
+.body a {
+  color: var(--accent);
+}
+
+.body ul,
+.body ol {
+  margin: 0;
+  padding-left: 1.4em;
+}
+
+.body li + li {
+  margin-top: 0.5em;
+}
+
+.body li::marker {
+  color: var(--accent);
+}
+
+.body code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.body :not(pre) > code {
+  padding: 0.1em 0.35em;
+  border-radius: 0.3em;
+  background: var(--code-inline-bg);
+}
+
+.block-code {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.body pre.shiki {
+  flex: 1;
+  margin: 0;
+  padding: 2.5cqh 2.5cqw;
+  overflow: auto;
+  border-radius: var(--radius);
+  background: var(--code-bg) !important;
+  font-size: 1.45cqw;
+  line-height: 1.55;
+}
+
+.shiki span {
+  color: var(--shiki-light);
+}
+
+.block-image {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  min-height: 0;
+}
+
+.body figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5cqh;
+  height: 100%;
+  margin: 0;
+}
+
+.body figure img {
+  min-height: 0;
+  max-width: 100%;
+  object-fit: contain;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.body figcaption {
+  font-size: 1.4cqw;
+  color: var(--muted);
+}
+
+.body table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1.8cqw;
+}
+
+.body th,
+.body td {
+  padding: 0.6em 0.8em;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+.body th {
+  color: var(--accent);
+}
+
+.body blockquote {
+  margin: 0;
+  padding-left: 1em;
+  border-left: 0.4cqw solid var(--accent);
+  font-size: 2.8cqw;
+}
+
+.card {
+  display: block;
+  padding: 2cqh 2cqw;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.card::before {
+  content: "🔗 ";
+}
+
+/* レイアウトごとの配置 */
+
+.layout-title .slide-inner,
+.layout-section .slide-inner,
+.layout-statement .slide-inner,
+.layout-end .slide-inner {
+  justify-content: center;
+}
+
+.layout-title .heading {
+  font-size: 5.6cqw;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 2.2cqw;
+  color: var(--muted);
+}
+
+.byline {
+  margin: 2cqh 0 0;
+  font-size: 1.6cqw;
+  color: var(--muted);
+}
+
+.layout-section .heading {
+  font-size: 6cqw;
+}
+
+.layout-statement .heading {
+  font-size: 5cqw;
+}
+
+.layout-statement:has(.key) .heading {
+  font-size: 2.4cqw;
+  color: var(--muted);
+}
+
+.key {
+  margin: 0;
+  font-size: 4.6cqw;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.layout-statement .body {
+  flex: 0;
+}
+
+.layout-quote .body blockquote {
+  font-size: 3.4cqw;
+}
+
+.layout-end .slide-inner {
+  align-items: center;
+  text-align: center;
+}
+
+.layout-end .heading {
+  font-size: 5cqw;
+}
+
+.end-link {
+  margin: 0;
+  font-size: 1.8cqw;
+  color: var(--muted);
+}
+
+/* ---------- アニメーション（共通の仕組み） ---------- */
+
+/* 遷移：表示前は次の位置、表示後は前の位置へ（プリセットごとに --from / --to を変える） */
+html.is-ready .slide {
+  transform: var(--slide-from);
+  opacity: var(--slide-from-opacity, 0);
+  transition:
+    transform var(--dur) var(--ease),
+    opacity var(--dur) var(--ease),
+    visibility 0s linear var(--dur);
+}
+
+html.is-ready .slide.is-past {
+  transform: var(--slide-to);
+}
+
+html.is-ready .slide.is-active {
+  transform: none;
+  opacity: 1;
+  transition-delay: 0s;
+}
+
+/* 要素の登場：--i の順に少しずつずらす */
+.slide.is-active .anim,
+.slide.is-active .block-list li {
+  /* 終了後は素の状態に戻す（clip-path でリストのマーカーが切れないように） */
+  animation: var(--enter) var(--dur) var(--ease) backwards;
+  animation-delay: calc(var(--delay) + var(--i, 0) * var(--stagger));
+}
+
+/* steps: true のリストは 1 項目ずつ */
+.slide [data-step] {
+  animation: none !important;
+  transition:
+    opacity 0.35s var(--ease),
+    transform 0.35s var(--ease);
+}
+
+.slide [data-step]:not(.is-shown) {
+  opacity: 0;
+  transform: translateY(0.6em);
+}
+
+/* 発表者ビューのプレビューは動かさない */
+.is-static,
+.is-static * {
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(0.8em);
+    filter: blur(6px);
+  }
+}
+
+@keyframes wipe {
+  /* 左に 2em はみ出させて、リストのマーカーも一緒に拭う */
+  from {
+    clip-path: inset(0 calc(100% + 2em) 0 -2em);
+  }
+  to {
+    clip-path: inset(0 0 0 -2em);
+  }
+}
+
+@keyframes draw-line {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes type {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes blink-in {
+  0%,
+  40% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  60% {
+    opacity: 0.2;
+  }
+}
+
+@keyframes caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes flicker {
+  0% {
+    opacity: 0.4;
+    filter: brightness(2);
+  }
+  10% {
+    opacity: 1;
+  }
+  15% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.6) rotate(-4deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.06) rotate(1deg);
+  }
+}
+
+@keyframes float {
+  50% {
+    transform: translateY(-1.5cqh) rotate(8deg);
+  }
+}
+
+/* ---------- プリセット: keynote（暗い背景・グラデーション・ふわっと浮き上がる） ---------- */
+
+[data-theme="keynote"] {
+  --outer: #05070f;
+  --bg:
+    radial-gradient(120% 90% at 85% 0%, #1d2a5c 0%, transparent 55%),
+    radial-gradient(80% 70% at 0% 100%, #2b1747 0%, transparent 60%), #0b1020;
+  --fg: #e8ecff;
+  --muted: #9aa3c7;
+  --accent: #8ea8ff;
+  --line: #2a3460;
+  --code-bg: #0d1330cc;
+  --code-inline-bg: #ffffff14;
+  --shadow: 0 2cqh 6cqh #0008;
+  --slide-from: scale(1.04);
+  --slide-to: scale(0.96);
+  --enter: fade-up;
+  color-scheme: dark;
+}
+
+[data-theme="keynote"] .heading {
+  background: linear-gradient(100deg, #fff 30%, #b9c6ff 70%, #e0b3ff);
+  background-clip: text;
+  color: transparent;
+}
+
+[data-theme="keynote"] .layout-statement:has(.key) .heading {
+  background: none;
+  color: var(--muted);
+}
+
+[data-theme="keynote"] .key {
+  background: linear-gradient(100deg, #b9c6ff, #f0abfc);
+  background-clip: text;
+  color: transparent;
+}
+
+[data-theme="keynote"] .shiki span,
+[data-theme="terminal"] .shiki span {
+  color: var(--shiki-dark);
+}
+
+/* ---------- プリセット: paper（紙っぽい明るい背景・左から右へ拭うように） ---------- */
+
+[data-theme="paper"] {
+  --outer: #e7e1d3;
+  --bg: #f8f4ea;
+  --fg: #1f1d1a;
+  --muted: #6b6459;
+  --accent: #c2410c;
+  --line: #d9d0bd;
+  --code-bg: #fffdf7;
+  --code-inline-bg: #ece4d2;
+  --shadow: 0 1cqh 3cqh #0000001f;
+  --font-heading: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+  --slide-from: translateX(100%);
+  --slide-to: translateX(-100%);
+  --slide-from-opacity: 1;
+  --enter: wipe;
+  --dur: 0.8s;
+  --ease: cubic-bezier(0.65, 0, 0.35, 1);
+  color-scheme: light;
+}
+
+[data-theme="paper"] .slide-inner {
+  padding-left: 9cqw;
+}
+
+[data-theme="paper"] .slide-inner::before {
+  position: absolute;
+  inset: 0 auto 0 4.5cqw;
+  width: 1px;
+  background: var(--accent);
+  opacity: 0.4;
+  content: "";
+}
+
+[data-theme="paper"] .heading {
+  position: relative;
+  padding-bottom: 0.3em;
+}
+
+[data-theme="paper"] .heading::after {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 3em;
+  height: 0.5cqh;
+  background: var(--accent);
+  transform-origin: left;
+  content: "";
+}
+
+[data-theme="paper"] .slide.is-active .heading::after {
+  animation: draw-line 0.9s var(--ease) 0.5s both;
+}
+
+[data-theme="paper"] .body pre.shiki {
+  border: 1px solid var(--line);
+}
+
+/* ---------- プリセット: terminal（黒地に緑・打鍵するように出る） ---------- */
+
+[data-theme="terminal"] {
+  --outer: #000;
+  --bg:
+    repeating-linear-gradient(0deg, #ffffff06 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse at center, #0f1f13 0%, #050805 80%);
+  --fg: #b6f7c1;
+  --muted: #5fae75;
+  --accent: #39ff88;
+  --line: #1f4a2b;
+  --code-bg: #00000080;
+  --code-inline-bg: #39ff8822;
+  --shadow: 0 0 0 1px var(--line);
+  --font-body: var(--font-mono), var(--font-noto-sans-jp), monospace;
+  --slide-from: none;
+  --slide-to: none;
+  --enter: blink-in;
+  --dur: 0.5s;
+  --ease: steps(6, end);
+  --stagger: 0.18s;
+  color-scheme: dark;
+}
+
+html.is-ready[data-theme="terminal"] .slide {
+  transition: visibility 0s;
+}
+
+[data-theme="terminal"] .slide.is-active {
+  animation: flicker 0.4s linear;
+  text-shadow: 0 0 0.6cqw #39ff8866;
+}
+
+[data-theme="terminal"] .kicker::before {
+  content: "$ cd ";
+  color: var(--muted);
+}
+
+[data-theme="terminal"] .heading::before {
+  content: "> ";
+  color: var(--accent);
+}
+
+[data-theme="terminal"] .heading::after {
+  content: "▋";
+  margin-left: 0.15em;
+  color: var(--accent);
+  animation: caret 1s steps(1) infinite;
+}
+
+[data-theme="terminal"] .slide.is-active .heading {
+  animation: type 0.9s steps(18, end) both;
+}
+
+[data-theme="terminal"] .body li::marker {
+  content: "- ";
+}
+
+/* ---------- プリセット: pop（明るい色・太い枠・弾むように） ---------- */
+
+[data-theme="pop"] {
+  --outer: #ffd84d;
+  --bg: #fffaf0;
+  --fg: #1b1b1b;
+  --muted: #5a5a5a;
+  --accent: #ff5a5f;
+  --line: #1b1b1b;
+  --code-bg: #fff;
+  --code-inline-bg: #ffe9a8;
+  --shadow: 0.6cqw 0.6cqw 0 #1b1b1b;
+  --slide-from: translateY(110%) rotate(4deg);
+  --slide-to: translateY(-110%) rotate(-4deg);
+  --enter: pop-in;
+  --ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur: 0.65s;
+  --radius: 1.6cqw;
+  color-scheme: light;
+}
+
+[data-theme="pop"] .slide {
+  border: 0.4cqw solid var(--line);
+  border-radius: 2cqw;
+}
+
+[data-theme="pop"] .slide-inner::after {
+  position: absolute;
+  top: 5cqh;
+  right: 5cqw;
+  width: 7cqw;
+  aspect-ratio: 1;
+  border: 0.4cqw solid var(--line);
+  border-radius: 50%;
+  background: #3a86ff;
+  box-shadow: var(--shadow);
+  content: "";
+}
+
+[data-theme="pop"] .slide.is-active .slide-inner::after {
+  animation:
+    pop-in 0.6s var(--ease) 0.3s both,
+    float 4s ease-in-out 1s infinite;
+}
+
+[data-theme="pop"] .kicker {
+  align-self: flex-start;
+  padding: 0.3em 0.9em;
+  border: 0.25cqw solid var(--line);
+  border-radius: 999px;
+  background: #ffd84d;
+  color: var(--fg);
+}
+
+[data-theme="pop"] .heading {
+  margin-right: 10cqw;
+}
+
+[data-theme="pop"] .key {
+  align-self: flex-start;
+  padding: 0.2em 0.6em;
+  border: 0.4cqw solid var(--line);
+  border-radius: var(--radius);
+  background: #ffd84d;
+  box-shadow: var(--shadow);
+}
+
+[data-theme="pop"] .body pre.shiki,
+[data-theme="pop"] .card,
+[data-theme="pop"] .body table {
+  border: 0.3cqw solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+[data-theme="pop"] .body blockquote {
+  border-left-width: 0.8cqw;
+}
+
+/* ---------- 操作 UI ---------- */
+
+.progress {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.progress > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s var(--ease);
+}
+
+.controls {
+  position: fixed;
+  right: 12px;
+  bottom: 14px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--outer) 85%, transparent);
+  color: var(--fg);
+  font: 13px/1 var(--font-body);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.controls:hover,
+.controls:focus-within,
+html.show-ui .controls {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .controls {
+    opacity: 1;
+  }
+}
+
+.controls button,
+.controls a {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.controls button:hover,
+.controls a:hover,
+.controls [aria-pressed="true"] {
+  background: color-mix(in srgb, var(--fg) 15%, transparent);
+}
+
+.controls :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.counter {
+  padding: 0 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.notes-panel {
+  position: fixed;
+  right: 12px;
+  bottom: 60px;
+  left: 12px;
+  z-index: 9;
+  max-height: 32vh;
+  margin: 0 auto;
+  max-width: 900px;
+  padding: 12px 20px;
+  overflow: auto;
+  border-radius: 12px;
+  background: color-mix(in srgb, #000 82%, transparent);
+  color: #f2f2f2;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.notes-panel a,
+.presenter a {
+  color: inherit;
+}
+
+.notes-empty {
+  opacity: 0.6;
+}
+
+/* ---------- 発表者ビュー（?presenter） ---------- */
+
+html.is-presenter body {
+  background: #111;
+  color: #eee;
+}
+
+html.is-presenter .deck {
+  inset: 16px 38% 30% 16px;
+}
+
+html.is-presenter .controls {
+  opacity: 1;
+  background: #222;
+  color: #eee;
+}
+
+html.is-presenter .progress {
+  display: none;
+}
+
+.presenter {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  color: #eee;
+  font-family: var(--font-body);
+}
+
+.presenter > * {
+  pointer-events: auto;
+}
+
+.presenter-label {
+  margin: 0 0 8px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  opacity: 0.6;
+}
+
+.presenter-next {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: calc(38% - 32px);
+}
+
+.presenter-next-stage {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  container-type: size;
+  border: 1px solid #333;
+}
+
+.presenter-next-stage .slide {
+  visibility: visible;
+}
+
+.presenter-notes {
+  position: absolute;
+  right: 38%;
+  bottom: 70px;
+  left: 16px;
+  height: calc(30% - 90px);
+  overflow: auto;
+  font-size: 18px;
+  line-height: 1.8;
+}
+
+.presenter-meta {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.presenter-timer {
+  font: 700 40px/1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.presenter-meta button {
+  padding: 6px 12px;
+  border: 1px solid #444;
+  border-radius: 6px;
+  background: #222;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* ---------- 動きを減らす設定 ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html.is-ready .slide,
+  html.is-ready .slide.is-past {
+    transform: none !important;
+    transition:
+      opacity 0.2s,
+      visibility 0s linear 0.2s !important;
+  }
+
+  .slide.is-active,
+  .slide.is-active *,
+  .slide.is-active *::before,
+  .slide.is-active *::after {
+    animation: none !important;
+  }
+}
+
+/* ---------- 印刷（PDF 書き出し） ---------- */
+
+@media print {
+  @page {
+    size: 1280px 720px;
+    margin: 0;
+  }
+
+  html,
+  body {
+    height: auto;
+    overflow: visible;
+  }
+
+  .deck {
+    position: static;
+    container-type: normal;
+  }
+
+  .slide,
+  html.is-ready .slide {
+    position: relative;
+    width: 1280px;
+    height: 720px;
+    visibility: visible;
+    opacity: 1;
+    transform: none;
+    break-after: page;
+  }
+
+  .slide *,
+  .slide *::before,
+  .slide *::after {
+    animation: none !important;
+  }
+
+  .slide [data-step] {
+    opacity: 1;
+    transform: none;
+  }
+
+  .controls,
+  .chrome,
+  .notes-panel,
+  .presenter {
+    display: none !important;
+  }
+}

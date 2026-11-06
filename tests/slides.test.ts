@@ -1,0 +1,151 @@
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import { slidesSchema } from '@infixer/core/schema';
+import { buildDeck } from '../src/lib/slides/build';
+
+const options = slidesSchema.parse({});
+
+async function deckOf(body: string, mdx = false, extra = {}) {
+  return buildDeck({
+    body,
+    mdx,
+    title: '記事タイトル',
+    description: '説明',
+    publishDate: '2026-11-06',
+    options: { ...options, ...extra },
+    postUrl: '/blog/2026/example',
+  });
+}
+
+const summary = (deck: Awaited<ReturnType<typeof deckOf>>) =>
+  deck.slides.map((s) => [s.layout, s.kicker ?? '', s.heading ?? '']);
+
+test('表紙と最後のスライドが付き、本文の段落はノートになる', async () => {
+  const deck = await deckOf(`導入の話。
+
+## 見出し
+
+ここはノート。
+
+- 項目1
+- 項目2
+`);
+  assert.deepEqual(summary(deck), [
+    ['title', '', '記事タイトル'],
+    ['bullets', '', '見出し'],
+    ['end', '', 'ありがとうございました'],
+  ]);
+  assert.match(deck.slides[0].notesHtml, /導入の話/);
+  assert.match(deck.slides[1].notesHtml, /ここはノート/);
+  assert.doesNotMatch(deck.slides[1].bodyHtml, /ここはノート/);
+  assert.match(deck.slides[1].bodyHtml, /<li style="--i:1">項目1<\/li>/);
+  assert.match(deck.slides.at(-1)!.bodyHtml, /href="\/blog\/2026\/example"/);
+  assert.equal(deck.subtitle, '説明');
+  assert.equal(deck.date, '2026-11-06');
+});
+
+test('h2 の直後に h3 が続くと章扉になり、h3 には章タイトルが付く', async () => {
+  const deck = await deckOf(`## 章
+
+### 節A
+
+> 引用
+
+### 節B
+
+**大事なこと**を話す。
+`);
+  assert.deepEqual(summary(deck).slice(1, -1), [
+    ['section', '', '章'],
+    ['quote', '章', '節A'],
+    ['statement', '章', '節B'],
+  ]);
+  assert.match(deck.slides[3].bodyHtml, /class="key anim"[^>]*>大事なこと</);
+});
+
+test('コード・画像は 1 枚に 1 つまでで、直前の段落は次のスライドのノートになる', async () => {
+  const deck = await deckOf(`## コード
+
+前置き。
+
+\`\`\`ts
+const a = 1;
+\`\`\`
+
+次のコードの説明。
+
+\`\`\`ts
+const b = 2;
+\`\`\`
+
+![画像の説明](/images/a.png)
+`);
+  const body = deck.slides.slice(1, -1);
+  assert.deepEqual(
+    body.map((s) => s.layout),
+    ['code', 'code', 'image'],
+  );
+  assert.match(body[0].notesHtml, /前置き/);
+  assert.match(body[1].notesHtml, /次のコードの説明/);
+  assert.doesNotMatch(body[0].notesHtml, /次のコードの説明/);
+  assert.match(body[0].bodyHtml, /class="shiki/);
+  assert.match(body[2].bodyHtml, /<figcaption>画像の説明<\/figcaption>/);
+});
+
+test('区切り線で同じ見出しのままスライドを分ける', async () => {
+  const deck = await deckOf(`## 見出し
+
+- a
+
+---
+
+- b
+`);
+  assert.deepEqual(summary(deck).slice(1, -1), [
+    ['bullets', '', '見出し'],
+    ['bullets', '', '見出し'],
+  ]);
+});
+
+test('MDX の import・生 HTML・<Cite> は落とし、LinkCard はリンクとして出す', async () => {
+  const deck = await deckOf(
+    `import LinkCard from '../LinkCard.astro';
+
+<div>iframe など</div>
+
+## 参考
+
+本文<Cite id="x" />です。
+
+<LinkCard url="https://example.com/post" />
+`,
+    true,
+  );
+  const slide = deck.slides[1];
+  assert.equal(slide.layout, 'content');
+  assert.match(slide.bodyHtml, /<a class="card" href="https:\/\/example.com\/post">example.com\/post<\/a>/);
+  assert.match(slide.notesHtml, /<p>本文です。<\/p>/);
+  assert.doesNotMatch(JSON.stringify(deck), /import LinkCard|iframe/);
+});
+
+test('steps: true ならリスト項目に順番が付く', async () => {
+  const deck = await deckOf(
+    `## 手順
+
+1. 一つ目
+2. 二つ目
+   - 入れ子
+`,
+    false,
+    { steps: true },
+  );
+  const slide = deck.slides[1];
+  assert.equal(slide.steps, 2);
+  assert.match(slide.bodyHtml, /data-step="1"/);
+  assert.match(slide.bodyHtml, /data-step="2"/);
+  assert.doesNotMatch(slide.bodyHtml, /data-step="3"/);
+});
+
+test('frontmatter の slides: true は既定値で埋まる', () => {
+  assert.deepEqual(slidesSchema.parse({}), { theme: 'keynote', steps: false });
+});

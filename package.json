@@ -15,6 +15,7 @@
     "lint": "oxlint",
     "check": "oxlint && oxfmt --check",
     "test:images": "tsx --test tests/responsive-markdown-images.test.ts",
+    "test:slides": "tsx --test tests/slides.test.ts",
     "infixer": "infixer",
     "test:cli": "pnpm --filter @infixer/cli test",
     "typecheck:packages": "tsc -p packages/core && tsc -p packages/cli"
@@ -30,11 +31,19 @@
     "@resvg/resvg-js": "^2.4.1",
     "astro": "^7.1.1",
     "drizzle-orm": "^0.45.2",
+    "hast-util-to-html": "^9.0.5",
+    "mdast-util-from-markdown": "^2.0.2",
+    "mdast-util-gfm": "^3.1.0",
+    "mdast-util-mdx": "^3.0.0",
+    "mdast-util-to-string": "^4.0.0",
+    "micromark-extension-gfm": "^3.0.0",
+    "micromark-extension-mdxjs": "^3.0.0",
     "postcss": ">=8.4.29 <9.0.0",
     "prismjs": "^1.30.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
-    "satori": "^0.10.3"
+    "satori": "^0.10.3",
+    "shiki": "^4.0.2"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

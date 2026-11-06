@@ -9,6 +9,9 @@ import { fileURLToPath } from 'node:url';
 import { responsiveMarkdownImages } from './src/integrations/responsive-markdown-images';
 import { codeCopyButton } from './src/integrations/code-copy-button';
 
+// astro dev で起動したときだけ true（build・check・sync などは false）
+const isDevServer = process.argv.slice(2).includes('dev');
+
 // https://astro.build/config
 export default defineConfig({
   site: 'https://infixer.net',
@@ -38,6 +41,10 @@ export default defineConfig({
   },
   vite: {
     plugins: [tailwindcss()],
+    // dev サーバーを動かしたまま astro build すると、同じ node_modules/.vite の依存キャッシュを
+    // ビルド（中で立ち上がる Vite サーバー）が作り直し、dev サーバーが
+    // 「The file does not exist at .../deps_ssr/xxx.js」で落ちる。dev サーバー以外は別のフォルダを使う
+    cacheDir: isDevServer ? undefined : 'node_modules/.vite-build',
     optimizeDeps: {
       exclude: ['@resvg/resvg-js'],
       include: [],

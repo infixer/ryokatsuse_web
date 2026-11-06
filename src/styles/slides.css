@@ -38,20 +38,22 @@ body {
   font-family: var(--font-body);
 }
 
+/* 全スライドをグリッドの同じマスに重ね、デッキの中央に置く */
 .deck {
   position: fixed;
   inset: 0;
+  display: grid;
+  place-items: center;
   container-type: size;
 }
 
+/* デッキに収まる最大の 16:9。スクロールはさせないので overflow は clip */
 .slide {
-  position: absolute;
-  inset: 0;
-  margin: auto;
-  width: min(100cqw, 100cqh * 16 / 9);
+  grid-area: 1 / 1;
+  inline-size: min(100cqi, 100cqb * 16 / 9);
   aspect-ratio: 16 / 9;
   container-type: size;
-  overflow: hidden;
+  overflow: clip;
   background: var(--bg);
   color: var(--fg);
   visibility: hidden;
@@ -493,7 +495,8 @@ html:not(.is-ready) .slide:first-child {
 }
 
 .layout-statement .body {
-  flex: 0;
+  /* 中身の高さのまま中央に置く（flex: 0 だと高さが 0 になり、キーメッセージがはみ出す） */
+  flex: 0 0 auto;
 }
 
 .layout-quote .body blockquote {
@@ -983,8 +986,8 @@ html.is-presenter .deck {
   height: var(--stage-h);
 }
 
-html.is-presenter .deck > .slide {
-  margin: 0;
+html.is-presenter .deck {
+  place-items: start;
 }
 
 html.is-presenter .controls {
@@ -1025,7 +1028,8 @@ html.is-presenter .progress {
 }
 
 .presenter-next-stage {
-  position: relative;
+  display: grid;
+  place-items: center;
   aspect-ratio: 16 / 9;
   container-type: size;
   border: 1px solid #333;
@@ -1115,14 +1119,15 @@ html.is-presenter .progress {
     overflow: visible;
   }
 
+  /* 印刷では重ねずに 1 枚 1 ページで並べる */
   .deck {
     position: static;
+    display: block;
     container-type: normal;
   }
 
   .slide,
   html.is-ready .slide {
-    position: relative;
     width: 1280px;
     height: 720px;
     visibility: visible;

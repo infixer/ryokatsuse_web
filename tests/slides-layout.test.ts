@@ -374,7 +374,7 @@ describe('スライドのはみ出し', { skip: decks.length === 0 && 'dist/clie
         const inner = document.querySelectorAll('.deck > .slide')[1].querySelector('.slide-inner')!;
         inner.insertAdjacentHTML(
           'beforeend',
-          '<p style="color:#999">薄い文字</p><p style="background:#333;color:#555">暗い背景の暗い文字</p><h2 class="heading" style="color:#888">大きな文字</h2>',
+          '<p style="font-size:16px;color:#999">薄い文字</p><p style="font-size:16px;background:#333;color:#555">暗い背景の暗い文字</p><h2 class="heading" style="color:#888">大きな文字</h2>',
         );
       });
       const low = await findLowContrast(page);

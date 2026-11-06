@@ -326,6 +326,64 @@ html:not(.is-ready) .slide:first-child {
   color: var(--muted);
 }
 
+/* 表紙の右下の自己紹介 */
+.profile {
+  position: absolute;
+  right: 5cqw;
+  bottom: 6cqh;
+  display: flex;
+  align-items: center;
+  gap: 1.6cqw;
+  padding: 1.6cqh 2cqw 1.6cqh 1.6cqh;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fg) 4%, transparent);
+  font-size: 1.2cqw;
+  line-height: 1.4;
+}
+
+.profile-icon {
+  width: 7cqw;
+  height: 7cqw;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #fff;
+  box-shadow: 0 0 0 0.25cqw var(--accent);
+}
+
+.profile-name {
+  margin: 0 0 0.3em;
+  font-size: 1.8cqw;
+  font-weight: 700;
+}
+
+.profile-links {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 0.25em 1.4em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.profile-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.profile-links a:hover {
+  color: var(--accent);
+}
+
+.profile-links svg {
+  width: 1.1em;
+  height: 1.1em;
+  flex-shrink: 0;
+}
+
 .layout-section .heading {
   font-size: 6cqw;
 }
@@ -730,6 +788,16 @@ html.is-ready[data-theme="terminal"] .slide {
   :is(.layout-title, .layout-section, .layout-statement)
   .heading {
   margin-right: 10cqw;
+}
+
+[data-theme="pop"] .profile {
+  border: 0.3cqw solid var(--line);
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+
+[data-theme="pop"] .profile-icon {
+  box-shadow: 0 0 0 0.3cqw var(--line);
 }
 
 [data-theme="pop"] .key {

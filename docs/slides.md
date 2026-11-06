@@ -68,6 +68,10 @@ slides:
 
 新しいプリセットを足すときは、`packages/core/src/schema.ts` の `slideThemes` に名前を追加し、`slides.css` に `[data-theme='名前']` で変数（`--bg` `--fg` `--accent` …）と `--enter`（要素の登場アニメーション）・`--slide-from` / `--slide-to`（遷移）を定義します。
 
+## 表紙の自己紹介
+
+表紙の右下に、丸く切り抜いたアイコン・名前（infixer）・X / Bluesky / GitHub / infixer.net へのリンクを出します。内容は `src/lib/slides/profile.ts`、アイコンは `public/images/infixer-icon.jpg` で変えられます。
+
 ## 操作
 
 | キー | 動作 |
@@ -90,6 +94,7 @@ slides:
 | --- | --- |
 | `src/lib/slides/build.ts` | Markdown/MDX 本文 → スライド構造の変換（Shiki でコードをハイライト） |
 | `src/pages/slides/[...slug].astro` | `slides` を持つ記事のスライドページをビルド時に生成 |
+| `src/lib/slides/profile.ts` | 表紙に出す自己紹介（名前・アイコン・リンク） |
 | `src/lib/slides/runtime.ts` | 操作・発表者ビュー・同期（BroadcastChannel） |
 | `src/styles/slides.css` | 共通レイアウトとプリセット |
 | `tests/slides.test.ts` | 変換ルールのテスト（`pnpm test:slides`） |

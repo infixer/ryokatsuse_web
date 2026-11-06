@@ -3,6 +3,7 @@ import { Font } from 'astro:assets';
 import { getCollection } from 'astro:content';
 import { slideThemes } from '@infixer/core/schema';
 import { buildDeck } from '../../lib/slides/build';
+import { profileIcons, slideProfile } from '../../lib/slides/profile';
 import '../../styles/slides.css';
 
 export const prerender = true;
@@ -65,9 +66,32 @@ const pageTitle = `${deck.title}（スライド）`;
                   {deck.event && <p class="eyebrow anim" style="--i:0">{deck.event}</p>}
                   <h1 class="heading anim" style="--i:1">{slide.heading}</h1>
                   {deck.subtitle && <p class="subtitle anim" style="--i:2">{deck.subtitle}</p>}
-                  <p class="byline anim" style="--i:3">
-                    ryokatsu{deck.date && <> · <time>{deck.date}</time></>}
-                  </p>
+                  {deck.date && (
+                    <p class="byline anim" style="--i:3">
+                      <time>{deck.date}</time>
+                    </p>
+                  )}
+                  <div class="profile anim" style="--i:4">
+                    <img class="profile-icon" src={slideProfile.icon} alt="" width="96" height="96" />
+                    <div class="profile-body">
+                      <p class="profile-name">{slideProfile.name}</p>
+                      <ul class="profile-links">
+                        {slideProfile.links.map((link) => {
+                          const icon = profileIcons[link.service];
+                          return (
+                            <li>
+                              <a href={link.href} aria-label={`${icon.label}: ${link.label}`}>
+                                <svg viewBox={icon.viewBox} aria-hidden="true">
+                                  <path fill="currentColor" d={icon.path} />
+                                </svg>
+                                <span>{link.label}</span>
+                              </a>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  </div>
                 </>
               ) : (
                 <>

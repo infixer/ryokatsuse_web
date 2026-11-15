@@ -315,6 +315,35 @@ export const initComposer = (form: HTMLFormElement) => {
     }
   };
 
+  /** カードの OGP を取り直す（サイトの情報が更新されたときや、うまく取れなかったとき用） */
+  const refreshLink = async (item: HTMLElement) => {
+    const url = item.dataset.url;
+    if (!url) return;
+    item.dataset.state = 'loading';
+    item.classList.add('opacity-50');
+    update();
+    setStatus('リンクカードを取り直しています…');
+
+    try {
+      const response = await fetch(
+        `/admin/diary/link-card?url=${encodeURIComponent(url)}&refresh=1`,
+      );
+      if (!response.ok) throw new Error();
+      const template = document.createElement('template');
+      template.innerHTML = (await response.text()).trim();
+      const card = template.content.firstElementChild;
+      if (!card) throw new Error();
+      item.replaceWith(card);
+      setStatus('リンクカードを取り直しました');
+    } catch {
+      delete item.dataset.state;
+      item.classList.remove('opacity-50');
+      setStatus('リンクカードを取り直せませんでした', true);
+    } finally {
+      update();
+    }
+  };
+
   const insertText = (text: string) => {
     textarea.focus();
     textarea.setRangeText(
@@ -383,8 +412,16 @@ export const initComposer = (form: HTMLFormElement) => {
     void addImages(files);
   });
 
-  // 画像・リンクカードの削除ボタン
+  // リンクカードの再取得ボタン・画像とリンクカードの削除ボタン
   form.addEventListener('click', (event) => {
+    const refresh = (event.target as Element).closest('.composer-refresh');
+    if (refresh) {
+      event.preventDefault();
+      const item = refresh.closest<HTMLElement>('.composer-link');
+      if (item) void refreshLink(item);
+      return;
+    }
+
     const button = (event.target as Element).closest('.composer-remove');
     if (!button) return;
     event.preventDefault();

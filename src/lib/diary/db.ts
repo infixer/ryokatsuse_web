@@ -235,7 +235,7 @@ export const resolveLinkPreview = async (
     const cached = (await getLinkPreviews([url])).get(url);
     if (cached) return cached;
   }
-  const ogp = await fetchOgp(url);
+  const ogp = await fetchOgp(url, {}, { fresh: refresh });
   if (!isFallback(url, ogp)) await savePreview(url, ogp);
   return ogp;
 };

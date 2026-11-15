@@ -34,7 +34,7 @@ const postedAt = formatPostedAt(post.publishedAt);
         <time class="text-gray-500 dark:text-neutral-400" datetime={post.publishedAt}>{postedAt}</time>
       ) : (
         <a
-          href={`/diary/${post.id}`}
+          href={`/feed/${post.id}`}
           class="text-gray-500 no-underline hover:underline dark:text-neutral-400!"
         >
           <time datetime={post.publishedAt}>{postedAt}</time>

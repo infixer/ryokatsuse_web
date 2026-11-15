@@ -3,6 +3,7 @@ export const prerender = true;
 
 import { type CollectionEntry, getCollection } from 'astro:content';
 import Layout from '../components/Layout.astro';
+import FeedTimeline from '../components/diary/FeedTimeline.astro';
 import Materials from '../components/Materials.astro';
 import PoemList from '../components/PoemList.astro';
 import PostList from '../components/PostList.astro';
@@ -85,37 +86,60 @@ const blogEntries: BlogEntry[] = allBlogEntries.slice(0, 4).map(
 
 <Layout description={description} wide>
   <h1 class="sr-only">infixer.net — JavaScript エンジニアのブログ</h1>
-  <section class="mb-12 text-lg">
-    <p>都内でソフトウェアエンジニアをしています。技術系はフロントエンドネタの記事が多めです。その他に雑多な学びや思考を書いています。</p>
-    <p class="mt-4">
-      <a
-        class="about-link group inline-flex items-center gap-2 rounded-full border border-gray-300 px-4 py-2 text-base font-bold text-gray-900! no-underline transition hover:border-gray-900 hover:bg-gray-900 hover:text-white! focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 dark:border-neutral-600 dark:text-gray-50! dark:hover:border-white dark:hover:bg-white dark:hover:text-neutral-900!"
-        href="/about"
-        rel="prefetch"
-      >
-        About
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="transition-transform duration-200 group-hover:translate-x-0.5">
-          <path d="M9 6l6 6-6 6" />
-        </svg>
-      </a>
-    </p>
-  </section>
-  <h2 class="text-2xl font-bold mb-8">最近の投稿記事</h2>
-  <section class="mb-8">
-    <PostList items={blogEntries} />
-  </section>
-  <div><a class="text-black dark:text-white underline hover:hover:no-underline" href="/blog">すべての記事一覧</a></div>
 
-  <h2 class="text-2xl font-bold mb-4 mt-12">最新のポエム</h2>
-  <p class="mb-8">うまく説明できないことを、ポエムのかたちで書いています。本文は縦書きです。</p>
-  <section class="mb-8">
-    <PoemList items={latestPoems} />
-  </section>
-  <div><a class="text-black dark:text-white underline hover:hover:no-underline" href="/poems" rel="prefetch">すべてのポエム</a></div>
+  <!-- 広い画面ではブログ（左）とフィード（右）の 2 カラム。狭い画面では縦に並べる -->
+  <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-12">
+    <div class="min-w-0">
+      <section class="mb-12 text-lg">
+        <p>都内でソフトウェアエンジニアをしています。技術系はフロントエンドネタの記事が多めです。その他に雑多な学びや思考を書いています。</p>
+        <p class="mt-4">
+          <a
+            class="about-link group inline-flex items-center gap-2 rounded-full border border-gray-300 px-4 py-2 text-base font-bold text-gray-900! no-underline transition hover:border-gray-900 hover:bg-gray-900 hover:text-white! focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 dark:border-neutral-600 dark:text-gray-50! dark:hover:border-white dark:hover:bg-white dark:hover:text-neutral-900!"
+            href="/about"
+            rel="prefetch"
+          >
+            About
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="transition-transform duration-200 group-hover:translate-x-0.5">
+              <path d="M9 6l6 6-6 6" />
+            </svg>
+          </a>
+        </p>
+      </section>
+      <h2 class="text-2xl font-bold mb-8">最近の投稿記事</h2>
+      <section class="mb-8">
+        <PostList items={blogEntries} />
+      </section>
+      <div><a class="text-black dark:text-white underline hover:hover:no-underline" href="/blog">すべての記事一覧</a></div>
 
-  <h2 class="text-2xl font-bold mb-4 mt-12">日記</h2>
-  <p class="mb-4">日々のことを、SNS に書くくらいの気軽さで残しています。</p>
-  <div><a class="text-black dark:text-white underline hover:hover:no-underline" href="/diary">日記を読む</a></div>
+      <h2 class="text-2xl font-bold mb-4 mt-12">最新のポエム</h2>
+      <p class="mb-8">うまく説明できないことを、ポエムのかたちで書いています。本文は縦書きです。</p>
+      <section class="mb-8">
+        <PoemList items={latestPoems} />
+      </section>
+      <div><a class="text-black dark:text-white underline hover:hover:no-underline" href="/poems" rel="prefetch">すべてのポエム</a></div>
+    </div>
+
+    <aside class="mt-12 lg:mt-0" aria-labelledby="feed-heading">
+      <div class="mb-4 flex items-baseline justify-between gap-4">
+        <h2 id="feed-heading" class="text-2xl font-bold">フィード</h2>
+        <a class="text-sm text-black underline hover:no-underline dark:text-white" href="/feed">すべて見る</a>
+      </div>
+      <p class="mb-6 text-sm text-gray-600 dark:text-neutral-300">日々のことを短く書いています。</p>
+      <FeedTimeline server:defer>
+        <!-- 読み込み中の仮表示 -->
+        <ol slot="fallback" class="ml-1.5 list-none border-l border-gray-200 p-0 dark:border-neutral-700" aria-hidden="true">
+          {[0, 1, 2].map(() => (
+            <li class="pb-5 pl-6">
+              <span class="block h-3 w-24 animate-pulse rounded bg-gray-200 dark:bg-neutral-700" />
+              <span class="mt-2 block h-3 w-full animate-pulse rounded bg-gray-200 dark:bg-neutral-700" />
+              <span class="mt-1.5 block h-3 w-2/3 animate-pulse rounded bg-gray-200 dark:bg-neutral-700" />
+            </li>
+          ))}
+        </ol>
+      </FeedTimeline>
+    </aside>
+  </div>
+
   <h2 id="materials" class="text-2xl font-bold mb-4 mt-12 scroll-mt-20">登壇資料・作ったもの</h2>
   <p class="mb-8">これまでの登壇資料と、個人で作ったものをまとめています。</p>
   <section class="mb-12">

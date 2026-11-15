@@ -16,9 +16,9 @@ Markdown/MDXの `![説明](/images/photo.jpg)` 形式のローカルJPEG・PNG�
 
 記事の frontmatter に `slides:` を足すと、本文をスピーカーノートとして `/slides/<記事id>` にアニメーション付きのスライドを生成します。変換ルールとプリセットは [docs/slides.md](docs/slides.md) を参照してください。
 
-## 日記
+## フィード
 
-`/diary` は、ブラウザ（PC・スマホ・タブレット）の `/admin/diary` から投稿する SNS 風の日記です。本文は Cloudflare D1、画像は R2 に保存し、投稿画面は Cloudflare Access で保護しています。設計とセットアップは [docs/diary.md](docs/diary.md) を参照してください。
+`/feed` は、ブラウザ（PC・スマホ・タブレット）の `/admin/diary` から投稿する SNS 風の短い投稿です。トップページの右カラムに最新 5 件を表示します。本文は Cloudflare D1、画像は R2 に保存し、投稿画面は Cloudflare Access で保護しています。設計とセットアップは [docs/diary.md](docs/diary.md) を参照してください。
 
 ## infixer CLI
 

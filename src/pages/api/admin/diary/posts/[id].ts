@@ -7,7 +7,7 @@ import { parsePostInput } from '../../../../../lib/diary/input';
 export const PUT: APIRoute = async ({ params, request }) => {
   const id = params.id ?? '';
   const before = await getPost(id);
-  if (!before) return json({ error: '日記が見つかりません' }, 404);
+  if (!before) return json({ error: '投稿が見つかりません' }, 404);
 
   const input = parsePostInput(await request.json().catch(() => null));
   if (!input.ok) return json({ error: input.error }, 400);
@@ -26,7 +26,7 @@ export const PUT: APIRoute = async ({ params, request }) => {
 
 export const DELETE: APIRoute = async ({ params }) => {
   const post = await deletePost(params.id ?? '');
-  if (!post) return json({ error: '日記が見つかりません' }, 404);
+  if (!post) return json({ error: '投稿が見つかりません' }, 404);
 
   if (post.images.length > 0) {
     await env.DIARY_MEDIA.delete(post.images.map((image) => image.key));

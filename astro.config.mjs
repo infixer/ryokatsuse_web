@@ -15,6 +15,11 @@ const isDevServer = process.argv.slice(2).includes('dev');
 // https://astro.build/config
 export default defineConfig({
   site: 'https://infixer.net',
+  // 日記はフィードに名前を変えた。公開済みのリンクを壊さないよう転送する
+  redirects: {
+    '/diary': '/feed',
+    '/diary/[id]': '/feed/[id]',
+  },
   output: 'server',
   adapter: cloudflare({
     // Workers 実行時に sharp は動かないため、画像最適化はビルド時に済ませる

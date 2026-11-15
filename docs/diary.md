@@ -1,13 +1,13 @@
-# 日記
+# フィード（旧：日記）
 
-PC・スマホ・タブレットのブラウザから、SNS に書くくらいの気軽さで投稿する日記です。ブログ（Git 管理の Markdown をビルド時に生成）と違い、投稿は DB に保存し、保存した瞬間に公開されます。
+PC・スマホ・タブレットのブラウザから、SNS に書くくらいの気軽さで投稿する短い投稿（フィード）です。最初は「日記」として作ったため、コード・DB・管理画面のパスには `diary` の名前が残っています。ブログ（Git 管理の Markdown をビルド時に生成）と違い、投稿は DB に保存し、保存した瞬間に公開されます。
 
 ## 全体像
 
 | 項目 | 方針 |
 | --- | --- |
 | 保存先 | 本文・リンクカードは Cloudflare D1（`DIARY_DB`）、画像は R2（`DIARY_MEDIA`） |
-| 表示 | `/diary`（タイムライン）・`/diary/<id>`（1 投稿）をリクエスト時に描画 |
+| 表示 | `/feed`（タイムライン）・`/feed/<id>`（1 投稿）をリクエスト時に描画。トップページの右カラムに最新 5 件 |
 | 投稿 | `/admin/diary`（新規）・`/admin/diary/<id>/edit`（編集） |
 | 認証 | Cloudflare Access で `/admin/*` と `/api/admin/*` を保護。Worker 側でも JWT を検証する |
 | タイトル | 持たない。見出しは投稿日時（個別ページの title は「2026年11月15日の日記」） |
@@ -53,6 +53,14 @@ iPhone のホーム画面から開いたアプリは Safari と Cookie を共有
 - 画像は 1 枚なら元の比率（縦長は 3:4 で切り、最大高さあり）、2〜4 枚は 16:9 の枠にグリッドで並べる。タップすると元の画像を開く
 - リンクカードはブログと同じ `LinkCardView.astro` を使う（ブログの `<LinkCard>` もこのコンポーネントで描画している）
 
+## トップページ
+
+広い画面（`lg` 以上）では、ブログ（左）とフィード（右、幅 18rem）の 2 カラムにしている。狭い画面では、ブログ・ポエムのあとにフィードが続く。登壇資料・作ったものは 2 カラムの下に全幅で置く。
+
+- トップページはビルド時に静的生成しているので、フィード部分（`FeedTimeline.astro`）だけを `server:defer`（サーバーアイランド）にしている。ページ本体は静的なまま、最新 5 件をリクエスト時に差し込む
+- 読み込み中は仮表示（スケルトン）を出す。D1 が読めないときも、トップページ自体は表示される
+- 1 件は「日時・本文（4 行まで）・1 枚目の画像（2 枚以上なら +N）・1 つ目のリンクのタイトル」。全体が `/feed/<id>` へのリンク
+
 ## データ
 
 `db/diary-migrations/0001_init.sql`
@@ -72,10 +80,11 @@ link_previews (url, title, description, image, site_name, favicon_url, fetched_a
 
 | パス | 内容 |
 | --- | --- |
-| `GET /diary` | タイムライン（20 件ずつ。`?before=<published_at>` で前のページ） |
-| `GET /diary/<id>` | 1 投稿 |
+| `GET /feed` | タイムライン（20 件ずつ。`?before=<published_at>` で前のページ） |
+| `GET /feed/<id>` | 1 投稿 |
+| `GET /diary`・`/diary/<id>` | `/feed` へ 301 リダイレクト（名前を変える前のリンク用） |
 | `GET /media/<key>` | R2 の画像を配信（`immutable` で長期キャッシュ） |
-| `GET /admin/diary` | 投稿画面と最近の日記（編集・削除） |
+| `GET /admin/diary` | 投稿画面と最近の投稿（編集・削除） |
 | `GET /admin/diary/<id>/edit` | 編集画面 |
 | `GET /admin/diary/link-card?url=` | OGP を取得し、カードの HTML 断片を返す（Astro の partial） |
 | `POST /api/admin/diary/posts` | 投稿 |
@@ -112,6 +121,8 @@ pnpm exec wrangler secret put CF_ACCESS_AUD           # 控えた AUD タグ
 
 ### 3. ローカル開発
 
+`wrangler.jsonc` の `database_id` を変えたときは、ローカルの D1 も別のファイルになるので、マイグレーションを流し直す。
+
 ```sh
 pnpm exec wrangler d1 migrations apply infixer-diary --local
 pnpm dev
@@ -122,7 +133,7 @@ pnpm dev
 ## 今後
 
 - いいねを D1 に移し、日記にもいいねを付ける
-- 日記の RSS（`/diary-feed.xml`）
-- `/api/v1/diary.json` と `infixer diary` コマンド
+- フィードの RSS
+- `/api/v1/feed.json` と `infixer feed` コマンド
 - 投稿前に削除した画像が R2 に残るので、定期的に掃除する
 - 検索の対象に日記を含める

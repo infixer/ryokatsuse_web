@@ -10,16 +10,16 @@ const { posts } = await listPosts({ limit: 30 });
 const previews = await getLinkPreviews(posts.flatMap((post) => post.links));
 ---
 
-<Layout title="日記を書く" appleTouchIcon="/diary-app/apple-touch-icon.png">
+<Layout title="フィードに投稿" appleTouchIcon="/diary-app/apple-touch-icon.png">
   <DiaryAppHead slot="head" />
   <div class="mb-4 flex items-baseline justify-between gap-4">
-    <h1 class="text-2xl font-bold">日記を書く</h1>
-    <a class="text-sm text-black underline hover:no-underline dark:text-white" href="/diary">公開ページを見る</a>
+    <h1 class="text-2xl font-bold">フィードに投稿</h1>
+    <a class="text-sm text-black underline hover:no-underline dark:text-white" href="/feed">公開ページを見る</a>
   </div>
 
   <Composer />
 
-  <h2 class="mt-10 mb-2 text-lg font-bold">最近の日記</h2>
+  <h2 class="mt-10 mb-2 text-lg font-bold">最近の投稿</h2>
   <div class="border-t border-gray-200 dark:border-neutral-700">
     {posts.map((post) => (
       <DiaryPost post={post} previews={previews}>
@@ -36,7 +36,7 @@ const previews = await getLinkPreviews(posts.flatMap((post) => post.links));
   document.addEventListener('click', async (event) => {
     const button = (event.target as Element).closest<HTMLButtonElement>('.diary-delete');
     if (!button) return;
-    if (!confirm('この日記を削除しますか？（元に戻せません）')) return;
+    if (!confirm('この投稿を削除しますか？（元に戻せません）')) return;
 
     button.disabled = true;
     const response = await fetch(`/api/admin/diary/posts/${button.dataset.id}`, { method: 'DELETE' });

@@ -20,12 +20,13 @@
       "binding": "SESSION"
     }
   ],
-  // 日記の本文・リンクカードのキャッシュ。初回デプロイ時に Wrangler が自動で作成する
+  // 日記の本文・リンクカードのキャッシュ（wrangler d1 create infixer-diary で作成済み）
   // テーブルは db/diary-migrations の SQL で作る（docs/diary.md 参照）
   "d1_databases": [
     {
       "binding": "DIARY_DB",
       "database_name": "infixer-diary",
+      "database_id": "dc30c8da-edd2-4deb-960e-3002e5b5e3fc",
       "migrations_dir": "db/diary-migrations"
     }
   ],

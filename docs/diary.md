@@ -87,9 +87,9 @@ link_previews (url, title, description, image, site_name, favicon_url, fetched_a
 
 ### 1. D1・R2
 
-`wrangler.jsonc` に `DIARY_DB`（`infixer-diary`）と `DIARY_MEDIA`（`infixer-diary-media`）を定義してある。ID を書いていないので、初回の `wrangler deploy` で自動的に作成される。
+`wrangler.jsonc` に `DIARY_DB`（`infixer-diary`）と `DIARY_MEDIA`（`infixer-diary-media`）を定義してある。どちらも事前に作成済み（`wrangler d1 create infixer-diary` / `wrangler r2 bucket create infixer-diary-media`）。
 
-デプロイ後、本番の D1 にテーブルを作る。
+デプロイ前に、本番の D1 にテーブルを作る（マイグレーションを追加したときも同じ）。
 
 ```sh
 pnpm exec wrangler d1 migrations apply infixer-diary --remote

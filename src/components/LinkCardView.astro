@@ -1,0 +1,77 @@
+---
+/**
+ * リンクカードの見た目だけを持つコンポーネント。
+ * OGP の取得は呼び出し側（ブログの <LinkCard>・日記）で行う。
+ *
+ * 日記の投稿画面では、このカードをサーバーで描画した HTML 断片として差し込むため、
+ * スコープ付き <style> は使わず Tailwind のクラスだけで組んでいる。
+ */
+export interface Props {
+  url: string;
+  title: string;
+  description?: string;
+  thumbnail?: string | null;
+  siteName?: string;
+  faviconUrl?: string | null;
+  /** 外側の余白（ブログ本文では上下に余白を取る） */
+  class?: string;
+}
+
+const {
+  url,
+  title,
+  description,
+  thumbnail,
+  siteName,
+  faviconUrl,
+  class: className = 'my-6',
+} = Astro.props;
+
+const domain = new URL(url).hostname;
+---
+
+<div class:list={['w-full', className]}>
+  <a
+    href={url}
+    target="_blank"
+    rel="noopener noreferrer"
+    class="linkcard-container mx-auto flex h-[180px] max-h-[180px] w-full overflow-hidden rounded-lg border border-gray-200 bg-white text-inherit! no-underline! transition-shadow duration-200 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 [&_*]:no-underline!"
+  >
+    <div class="flex h-full w-[35%] items-center justify-center overflow-hidden bg-gray-100 dark:bg-gray-700">
+      {thumbnail ? (
+        <img
+          src={thumbnail}
+          alt=""
+          class="h-full w-full object-contain p-2"
+          loading="lazy"
+        />
+      ) : (
+        <div class="font-medium text-gray-400 dark:text-gray-500">noImage</div>
+      )}
+    </div>
+
+    <div class="flex h-full w-[65%] flex-col justify-between p-5">
+      <div class="mb-2 line-clamp-2 text-lg font-bold text-gray-900 dark:text-gray-100">
+        {title}
+      </div>
+
+      <div class="mb-auto line-clamp-3 text-sm text-gray-600 dark:text-gray-300">
+        {description || `${domain}のページ`}
+      </div>
+
+      <div class="mt-3 flex items-center text-xs text-gray-500 dark:text-gray-400">
+        {faviconUrl && (
+          <img
+            src={faviconUrl}
+            alt=""
+            class="mr-2 h-4 w-4 rounded"
+            width="16"
+            height="16"
+            onerror="this.style.display='none'"
+          />
+        )}
+        <span>{siteName || domain}</span>
+      </div>
+    </div>
+  </a>
+</div>

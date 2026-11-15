@@ -1,0 +1,37 @@
+---
+import Layout from '../../components/Layout.astro';
+import DiaryPost from '../../components/diary/DiaryPost.astro';
+import { getLinkPreviews, getPost } from '../../lib/diary/db';
+import { formatPostDate } from '../../lib/diary/format';
+import { excerpt } from '../../lib/diary/text';
+
+const id = Astro.params.id ?? '';
+const post = /^[0-9a-z]{1,32}$/.test(id) ? await getPost(id) : null;
+
+if (!post) {
+  return new Response('日記が見つかりません', {
+    status: 404,
+    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+  });
+}
+
+const previews = await getLinkPreviews(post.links);
+const title = `${formatPostDate(post.publishedAt)}の日記`;
+const description = excerpt(post.body) || title;
+const image = post.images[0] ? `/media/${post.images[0].key}` : undefined;
+---
+
+<Layout title={title} description={description} ogType="article" image={image} twitterCard={image ? 'summary_large_image' : 'summary'}>
+  <div class="mb-4">
+    <a href="/diary" class="text-black dark:text-white underline hover:no-underline inline-flex items-center gap-1">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M15 6l-6 6 6 6" />
+      </svg>
+      日記一覧に戻る
+    </a>
+  </div>
+  <h1 class="sr-only">{title}</h1>
+  <div class="border-t border-gray-200 dark:border-neutral-700">
+    <DiaryPost post={post} previews={previews} detail />
+  </div>
+</Layout>

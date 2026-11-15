@@ -1,0 +1,48 @@
+---
+import type { DiaryImage } from '../../lib/diary/db';
+
+export interface Props {
+  images: DiaryImage[];
+}
+
+const { images } = Astro.props;
+const count = images.length;
+
+// 1 枚のときは元の比率で（縦長すぎるものは 3:4 で切る）。2 枚以上は 16:9 の枠に並べる
+const single = count === 1 ? images[0] : null;
+const singleRatio = single
+  ? Math.max(single.width / single.height, 3 / 4)
+  : undefined;
+---
+
+<div
+  class:list={[
+    'mt-3 grid gap-0.5 overflow-hidden rounded-xl border border-gray-200 dark:border-neutral-700',
+    count === 1 ? 'max-h-[32rem] grid-cols-1' : 'aspect-video grid-cols-2',
+    count >= 3 && 'grid-rows-2',
+  ]}
+  style={single ? `aspect-ratio: ${singleRatio}` : undefined}
+>
+  {images.map((image, index) => (
+    <a
+      href={`/media/${image.key}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      class:list={[
+        'block min-h-0 overflow-hidden bg-gray-100 dark:bg-neutral-800',
+        count === 3 && index === 0 && 'row-span-2',
+      ]}
+      aria-label={`画像 ${index + 1} / ${count} を開く`}
+    >
+      <img
+        src={`/media/${image.key}`}
+        width={image.width}
+        height={image.height}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        class="h-full w-full object-cover"
+      />
+    </a>
+  ))}
+</div>

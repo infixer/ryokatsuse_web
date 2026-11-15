@@ -44,6 +44,8 @@ jobs:
 
       - run: pnpm test:images
 
+      - run: pnpm test:diary
+
   cli:
     name: CLI / Content Validate
     runs-on: ubuntu-latest

@@ -1,0 +1,25 @@
+---
+// 投稿画面に URL を貼ったときに呼ぶ。OGP を取得（キャッシュ）して、カードの HTML 断片だけを返す
+import ComposerLink from '../../../components/diary/ComposerLink.astro';
+import { resolveLinkPreview } from '../../../lib/diary/db';
+
+export const partial = true;
+
+const url = Astro.url.searchParams.get('url') ?? '';
+let valid = false;
+try {
+  valid = ['http:', 'https:'].includes(new URL(url).protocol);
+} catch {
+  valid = false;
+}
+
+if (!valid) {
+  return new Response('URL が不正です', { status: 400 });
+}
+
+const ogp = await resolveLinkPreview(url, {
+  refresh: Astro.url.searchParams.has('refresh'),
+});
+---
+
+<ComposerLink url={url} ogp={ogp} />

@@ -1,0 +1,48 @@
+---
+import Layout from '../../../components/Layout.astro';
+import Composer from '../../../components/diary/Composer.astro';
+import DiaryPost from '../../../components/diary/DiaryPost.astro';
+import { getLinkPreviews, listPosts } from '../../../lib/diary/db';
+
+// 自分用の投稿画面（Cloudflare Access で保護）
+const { posts } = await listPosts({ limit: 30 });
+const previews = await getLinkPreviews(posts.flatMap((post) => post.links));
+---
+
+<Layout title="日記を書く">
+  <div class="mb-4 flex items-baseline justify-between gap-4">
+    <h1 class="text-2xl font-bold">日記を書く</h1>
+    <a class="text-sm text-black underline hover:no-underline dark:text-white" href="/diary">公開ページを見る</a>
+  </div>
+
+  <Composer />
+
+  <h2 class="mt-10 mb-2 text-lg font-bold">最近の日記</h2>
+  <div class="border-t border-gray-200 dark:border-neutral-700">
+    {posts.map((post) => (
+      <DiaryPost post={post} previews={previews}>
+        <div class="mt-3 flex gap-4 text-sm">
+          <a class="text-black underline hover:no-underline dark:text-white" href={`/admin/diary/${post.id}/edit`}>編集</a>
+          <button type="button" class="diary-delete cursor-pointer text-red-600 underline hover:no-underline dark:text-red-400" data-id={post.id}>削除</button>
+        </div>
+      </DiaryPost>
+    ))}
+  </div>
+</Layout>
+
+<script>
+  document.addEventListener('click', async (event) => {
+    const button = (event.target as Element).closest<HTMLButtonElement>('.diary-delete');
+    if (!button) return;
+    if (!confirm('この日記を削除しますか？（元に戻せません）')) return;
+
+    button.disabled = true;
+    const response = await fetch(`/api/admin/diary/posts/${button.dataset.id}`, { method: 'DELETE' });
+    if (response.ok) {
+      button.closest('.diary-post')?.remove();
+    } else {
+      button.disabled = false;
+      alert('削除に失敗しました');
+    }
+  });
+</script>

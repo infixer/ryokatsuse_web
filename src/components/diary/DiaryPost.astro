@@ -1,0 +1,87 @@
+---
+import LinkCardView from '../LinkCardView.astro';
+import type { OgpData } from '../../lib/ogp';
+import type { DiaryPost } from '../../lib/diary/db';
+import { formatPostedAt } from '../../lib/diary/format';
+import { renderDiaryBody } from '../../lib/diary/text';
+import DiaryImages from './DiaryImages.astro';
+
+export interface Props {
+  post: DiaryPost;
+  previews: Map<string, OgpData>;
+  /** 個別ページでは本文を少し大きくし、日時をリンクにしない */
+  detail?: boolean;
+}
+
+const { post, previews, detail = false } = Astro.props;
+const html = renderDiaryBody(post.body, post.links);
+const postedAt = formatPostedAt(post.publishedAt);
+---
+
+<article class="diary-post flex gap-3 border-b border-gray-200 py-5 dark:border-neutral-700" data-post-id={post.id}>
+  <img
+    class="h-10 w-10 shrink-0 rounded-full bg-white"
+    src="/images/ryokatsu.jpg"
+    width="48"
+    height="48"
+    alt=""
+    decoding="async"
+  />
+  <div class="min-w-0 flex-1">
+    <header class="flex flex-wrap items-baseline gap-x-2 text-sm">
+      <span class="font-bold">ryokatsu</span>
+      {detail ? (
+        <time class="text-gray-500 dark:text-neutral-400" datetime={post.publishedAt}>{postedAt}</time>
+      ) : (
+        <a
+          href={`/diary/${post.id}`}
+          class="text-gray-500 no-underline hover:underline dark:text-neutral-400!"
+        >
+          <time datetime={post.publishedAt}>{postedAt}</time>
+        </a>
+      )}
+    </header>
+
+    {html && (
+      <div
+        class:list={[
+          'diary-body mt-1 whitespace-pre-wrap break-words tracking-[0.02em]',
+          detail ? 'text-lg leading-8' : 'text-base leading-7',
+        ]}
+        set:html={html}
+      />
+    )}
+
+    {post.images.length > 0 && <DiaryImages images={post.images} />}
+
+    {post.links.map((url) => {
+      const ogp = previews.get(url);
+      return (
+        <LinkCardView
+          class="mt-3"
+          url={url}
+          title={ogp?.title ?? new URL(url).hostname}
+          description={ogp?.description}
+          thumbnail={ogp?.image}
+          siteName={ogp?.siteName}
+          faviconUrl={ogp?.faviconUrl}
+        />
+      );
+    })}
+
+    <slot />
+  </div>
+</article>
+
+<style>
+  .diary-body :global(a) {
+    color: oklch(54.6% 0.245 262.881);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    word-break: break-all;
+  }
+
+  :global(html.dark) .diary-body :global(a) {
+    color: oklch(70.7% 0.165 254.624);
+  }
+</style>

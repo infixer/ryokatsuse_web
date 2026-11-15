@@ -1,0 +1,41 @@
+---
+import Layout from '../../components/Layout.astro';
+import DiaryPost from '../../components/diary/DiaryPost.astro';
+import { getLinkPreviews, listPosts } from '../../lib/diary/db';
+
+// 投稿してすぐ反映させるため、リクエストごとに描画する
+const before = Astro.url.searchParams.get('before');
+const { posts, nextCursor } = await listPosts({ before });
+const previews = await getLinkPreviews(posts.flatMap((post) => post.links));
+
+const description = '日々のことを気軽に書いている日記です。';
+---
+
+<Layout title="日記" description={description}>
+  <h1 class="text-2xl font-bold mb-2">日記</h1>
+  <p class="mb-4 text-gray-600 dark:text-neutral-300">{description}</p>
+
+  {posts.length === 0 ? (
+    <p class="py-10 text-center text-gray-500 dark:text-neutral-400">
+      {before ? 'これより前の日記はありません。' : 'まだ日記はありません。'}
+    </p>
+  ) : (
+    <div class="border-t border-gray-200 dark:border-neutral-700">
+      {posts.map((post) => <DiaryPost post={post} previews={previews} />)}
+    </div>
+  )}
+
+  <nav class="mt-8 flex justify-between gap-4" aria-label="日記のページ送り">
+    {before ? (
+      <a class="text-black dark:text-white underline hover:no-underline" href="/diary">最新の日記へ</a>
+    ) : <span />}
+    {nextCursor && (
+      <a
+        class="text-black dark:text-white underline hover:no-underline"
+        href={`/diary?before=${encodeURIComponent(nextCursor)}`}
+      >
+        もっと前の日記
+      </a>
+    )}
+  </nav>
+</Layout>

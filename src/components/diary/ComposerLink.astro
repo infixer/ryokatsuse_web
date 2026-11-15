@@ -1,0 +1,30 @@
+---
+import LinkCardView from '../LinkCardView.astro';
+import type { OgpData } from '../../lib/ogp';
+
+export interface Props {
+  url: string;
+  ogp?: OgpData;
+}
+
+const { url, ogp } = Astro.props;
+---
+
+<div class="composer-link relative" data-url={url}>
+  <LinkCardView
+    class="mt-3"
+    url={url}
+    title={ogp?.title ?? new URL(url).hostname}
+    description={ogp?.description}
+    thumbnail={ogp?.image}
+    siteName={ogp?.siteName}
+    faviconUrl={ogp?.faviconUrl}
+  />
+  <button
+    type="button"
+    class="composer-remove absolute right-2 top-5 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-black/70 text-white hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+    aria-label="リンクカードを外す"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+  </button>
+</div>

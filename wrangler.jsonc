@@ -19,5 +19,21 @@
     {
       "binding": "SESSION"
     }
+  ],
+  // 日記の本文・リンクカードのキャッシュ。初回デプロイ時に Wrangler が自動で作成する
+  // テーブルは db/diary-migrations の SQL で作る（docs/diary.md 参照）
+  "d1_databases": [
+    {
+      "binding": "DIARY_DB",
+      "database_name": "infixer-diary",
+      "migrations_dir": "db/diary-migrations"
+    }
+  ],
+  // 日記に添付した画像。/media/* から配信する
+  "r2_buckets": [
+    {
+      "binding": "DIARY_MEDIA",
+      "bucket_name": "infixer-diary-media"
+    }
   ]
 }

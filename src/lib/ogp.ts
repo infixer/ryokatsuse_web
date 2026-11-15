@@ -128,12 +128,69 @@ const fetchScrapboxOgp = async (
   };
 };
 
+// サーバーからのアクセスに動画の情報を返さないサイトは、公式の oEmbed API から取得する。
+// 例: YouTube は Cloudflare Workers などデータセンターからのアクセスに og:title / og:image の無いページを返す
+type OembedProvider = {
+  hosts: string[];
+  endpoint: string;
+  siteName: string;
+  faviconUrl: string;
+};
+
+const OEMBED_PROVIDERS: OembedProvider[] = [
+  {
+    hosts: [
+      'youtube.com',
+      'www.youtube.com',
+      'm.youtube.com',
+      'music.youtube.com',
+      'youtu.be',
+    ],
+    endpoint: 'https://www.youtube.com/oembed',
+    siteName: 'YouTube',
+    faviconUrl: 'https://www.youtube.com/favicon.ico',
+  },
+];
+
+const fetchOembed = async (
+  url: string,
+  signal: AbortSignal,
+): Promise<OgpData | null> => {
+  const host = new URL(url).hostname;
+  const provider = OEMBED_PROVIDERS.find((item) => item.hosts.includes(host));
+  if (!provider) return null;
+
+  const endpoint = new URL(provider.endpoint);
+  endpoint.searchParams.set('url', url);
+  endpoint.searchParams.set('format', 'json');
+
+  const response = await fetch(endpoint, { signal });
+  if (!response.ok) return null;
+
+  const data = (await response.json()) as {
+    title?: string;
+    author_name?: string;
+    thumbnail_url?: string;
+  };
+  if (!data.title) return null;
+
+  return {
+    title: data.title,
+    // 動画の説明文は oEmbed に無いので、チャンネル名を出す
+    description: data.author_name ?? '',
+    image: data.thumbnail_url ?? null,
+    siteName: provider.siteName,
+    faviconUrl: provider.faviconUrl,
+  };
+};
+
 /**
  * URLのOGP情報を取得する。取得できない場合はfallbackで補完する。
  */
 export const fetchOgp = async (
   url: string,
   fallback: Partial<OgpData> = {},
+  { fresh = false }: { fresh?: boolean } = {},
 ): Promise<OgpData> => {
   const domain = new URL(url).hostname;
   const defaults: OgpData = {
@@ -144,7 +201,8 @@ export const fetchOgp = async (
     faviconUrl: fallback.faviconUrl ?? null,
   };
 
-  const cached = cache.get(url);
+  // fresh: true のときは、サーバーが覚えている結果を使わずに取り直す
+  const cached = fresh ? undefined : cache.get(url);
   if (cached) return cached;
 
   const controller = new AbortController();
@@ -153,7 +211,8 @@ export const fetchOgp = async (
   try {
     const fetched = domain.endsWith('scrapbox.io')
       ? await fetchScrapboxOgp(url, controller.signal)
-      : await (async () => {
+      : ((await fetchOembed(url, controller.signal).catch(() => null)) ??
+        (await (async () => {
           const response = await fetch(url, {
             headers: {
               'User-Agent': 'Mozilla/5.0 (compatible; LinkCardBot/1.0)',
@@ -162,7 +221,7 @@ export const fetchOgp = async (
           });
           if (!response.ok) return null;
           return extractMetadata(await response.text(), url);
-        })();
+        })()));
 
     if (!fetched) return defaults;
 

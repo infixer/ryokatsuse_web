@@ -61,6 +61,13 @@ iPhone のホーム画面から開いたアプリは Safari と Cookie を共有
 - 読み込み中は仮表示（スケルトン）を出す。D1 が読めないときも、トップページ自体は表示される
 - 1 件は「日時・本文（4 行まで）・1 枚目の画像（2 枚以上なら +N）・1 つ目のリンクのタイトル」。全体が `/feed/<id>` へのリンク
 
+## リンクカードの取得
+
+`src/lib/ogp.ts` の `fetchOgp` で取得する（ブログの登壇資料などと共通）。
+
+- YouTube は、Cloudflare Workers などデータセンターからのアクセスに、動画の情報（`og:title`・`og:image`）が無いページを返す。そのため YouTube の URL は公式の oEmbed API（`https://www.youtube.com/oembed`）からタイトル・チャンネル名・サムネイルを取る。他に同じ問題のあるサイトが出てきたら `OEMBED_PROVIDERS` に足す
+- Cosense（Scrapbox）は HTML に OGP が無いので API から取る
+
 ## データ
 
 `db/diary-migrations/0001_init.sql`
@@ -72,7 +79,7 @@ link_previews (url, title, description, image, site_name, favicon_url, fetched_a
 
 - `images`：`[{ key, width, height }]`。`key` は R2 のキー（`diary/2026/11/<id>.webp`）で、`/media/<key>` から配信する
 - `links`：リンクカードにする URL の配列
-- `link_previews`：OGP のキャッシュ。貼り付けたときと保存したときに取得し、閲覧時は DB を読むだけにする。取得に失敗した URL は保存せず、次の機会に取り直す
+- `link_previews`：OGP のキャッシュ。投稿画面のカードにある再取得ボタンで取り直せる（`?refresh=1`）。貼り付けたときと保存したときに取得し、閲覧時は DB を読むだけにする。取得に失敗した URL は保存せず、次の機会に取り直す
 
 容量の目安：日本語 2,000 字は約 6KB なので、毎日書いても 1 年で数 MB。画像は R2 に置くので D1 にはほぼ影響しない。
 

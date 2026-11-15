@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { excerpt, renderDiaryBody } from '../src/lib/diary/text';
+import { excerpt, plainDiaryBody, renderDiaryBody } from '../src/lib/diary/text';
 
 test('改行を残し、HTML はエスケープする', () => {
   assert.equal(
@@ -31,4 +31,13 @@ test('URL の属性値に引用符を入れられない', () => {
 test('抜粋は URL と改行を除いて切り詰める', () => {
   assert.equal(excerpt('今日は\nhttps://example.com/ 晴れ', 100), '今日は 晴れ');
   assert.equal(excerpt('あいうえお', 3), 'あいう…');
+});
+
+test('プレーンテキスト版はリンクにせず、カードの行だけ省く', () => {
+  assert.equal(
+    plainDiaryBody('見た https://example.com/a\nhttps://example.com/card', [
+      'https://example.com/card',
+    ]),
+    '見た https://example.com/a',
+  );
 });

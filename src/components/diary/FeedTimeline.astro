@@ -1,0 +1,107 @@
+---
+/**
+ * トップページのサイドバーに出す、最新のフィード。
+ *
+ * トップページはビルド時に静的生成しているので、このコンポーネントだけを
+ * server:defer（サーバーアイランド）で読み込み、投稿をすぐ反映させる。
+ */
+import type { DiaryPost } from '../../lib/diary/db';
+import { getLinkPreviews, listPosts } from '../../lib/diary/db';
+import { formatPostedAt } from '../../lib/diary/format';
+import { plainDiaryBody } from '../../lib/diary/text';
+import type { OgpData } from '../../lib/ogp';
+
+export interface Props {
+  limit?: number;
+}
+
+const { limit = 5 } = Astro.props;
+
+let posts: DiaryPost[] = [];
+let previews = new Map<string, OgpData>();
+let failed = false;
+
+try {
+  ({ posts } = await listPosts({ limit }));
+  previews = await getLinkPreviews(
+    posts.flatMap((post) => post.links.slice(0, 1)),
+  );
+} catch (error) {
+  // フィードが読めなくてもトップページ自体は表示できるようにする
+  console.error('フィードの取得に失敗:', error);
+  failed = true;
+}
+---
+
+{posts.length === 0 ? (
+  <p class="text-sm text-gray-500 dark:text-neutral-400">
+    {failed ? 'フィードを読み込めませんでした。' : 'まだ投稿はありません。'}
+  </p>
+) : (
+  <ol class="ml-1.5 list-none border-l border-gray-200 p-0 dark:border-neutral-700">
+    {posts.map((post) => {
+      // サイドバーは狭いので、段落の間の空行は詰めて表示する
+      const text = plainDiaryBody(post.body, post.links).replace(/\n\s*\n+/g, '\n');
+      const image = post.images[0];
+      const link = post.links[0];
+      const linkTitle = link
+        ? (previews.get(link)?.title ?? new URL(link).hostname)
+        : undefined;
+
+      return (
+        <li class="relative pb-4 pl-4 last:pb-0">
+          <span
+            aria-hidden="true"
+            class="absolute top-2.5 -left-[5px] h-2.5 w-2.5 rounded-full border-2 border-white bg-gray-400 dark:border-neutral-800 dark:bg-neutral-500"
+          />
+          <a
+            href={`/feed/${post.id}`}
+            class="group block rounded-lg px-2 py-1.5 text-inherit! no-underline! transition-colors hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 dark:hover:bg-neutral-700/50"
+          >
+            <time
+              datetime={post.publishedAt}
+              class="text-xs font-bold tracking-wider text-gray-500 dark:text-neutral-400"
+            >
+              {formatPostedAt(post.publishedAt)}
+            </time>
+
+            {text && (
+              <p class="mt-1 line-clamp-4 whitespace-pre-wrap break-words text-sm leading-relaxed text-gray-800 dark:text-neutral-200">
+                {text}
+              </p>
+            )}
+
+            {image && (
+              <span class="relative mt-2 block overflow-hidden rounded-md border border-gray-200 dark:border-neutral-700">
+                <img
+                  src={`/media/${image.key}`}
+                  width={image.width}
+                  height={image.height}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  class="aspect-video w-full object-cover"
+                />
+                {post.images.length > 1 && (
+                  <span class="absolute right-1.5 bottom-1.5 rounded-full bg-black/70 px-2 py-0.5 text-xs font-bold text-white">
+                    +{post.images.length - 1}
+                  </span>
+                )}
+              </span>
+            )}
+
+            {linkTitle && (
+              <span class="mt-2 flex items-center gap-1.5 text-xs text-gray-500 dark:text-neutral-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="shrink-0">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                </svg>
+                <span class="min-w-0 truncate">{linkTitle}</span>
+              </span>
+            )}
+          </a>
+        </li>
+      );
+    })}
+  </ol>
+)}

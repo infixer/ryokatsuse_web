@@ -423,7 +423,7 @@ export const initComposer = (form: HTMLFormElement) => {
       if (!response.ok) throw new Error(data.error ?? '保存に失敗しました');
 
       if (mode === 'edit') {
-        location.href = `/diary/${postId}`;
+        location.href = `/feed/${postId}`;
         return;
       }
       clearDraft();
@@ -478,7 +478,7 @@ export const initComposer = (form: HTMLFormElement) => {
       for (const image of draft.images) showUploaded(image);
       for (const url of draft.links) void addLink(url);
       if (draft.body || draft.images.length || draft.links.length) {
-        setStatus('書きかけの日記を復元しました');
+        setStatus('書きかけの投稿を復元しました');
       }
     }
     applySharedContent();

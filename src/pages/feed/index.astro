@@ -8,16 +8,16 @@ const before = Astro.url.searchParams.get('before');
 const { posts, nextCursor } = await listPosts({ before });
 const previews = await getLinkPreviews(posts.flatMap((post) => post.links));
 
-const description = '日々のことを気軽に書いている日記です。';
+const description = '日々のことを短く書いているフィードです。';
 ---
 
-<Layout title="日記" description={description}>
-  <h1 class="text-2xl font-bold mb-2">日記</h1>
+<Layout title="フィード" description={description}>
+  <h1 class="text-2xl font-bold mb-2">フィード</h1>
   <p class="mb-4 text-gray-600 dark:text-neutral-300">{description}</p>
 
   {posts.length === 0 ? (
     <p class="py-10 text-center text-gray-500 dark:text-neutral-400">
-      {before ? 'これより前の日記はありません。' : 'まだ日記はありません。'}
+      {before ? 'これより前の投稿はありません。' : 'まだ投稿はありません。'}
     </p>
   ) : (
     <div class="border-t border-gray-200 dark:border-neutral-700">
@@ -25,16 +25,16 @@ const description = '日々のことを気軽に書いている日記です。';
     </div>
   )}
 
-  <nav class="mt-8 flex justify-between gap-4" aria-label="日記のページ送り">
+  <nav class="mt-8 flex justify-between gap-4" aria-label="フィードのページ送り">
     {before ? (
-      <a class="text-black dark:text-white underline hover:no-underline" href="/diary">最新の日記へ</a>
+      <a class="text-black dark:text-white underline hover:no-underline" href="/feed">最新の投稿へ</a>
     ) : <span />}
     {nextCursor && (
       <a
         class="text-black dark:text-white underline hover:no-underline"
-        href={`/diary?before=${encodeURIComponent(nextCursor)}`}
+        href={`/feed?before=${encodeURIComponent(nextCursor)}`}
       >
-        もっと前の日記
+        もっと前の投稿
       </a>
     )}
   </nav>

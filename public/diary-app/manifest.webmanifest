@@ -1,8 +1,8 @@
 {
   "id": "/admin/diary",
-  "name": "infixer 日記",
-  "short_name": "日記",
-  "description": "infixer.net の日記を投稿する",
+  "name": "infixer フィード",
+  "short_name": "フィード",
+  "description": "infixer.net のフィードに投稿する",
   "lang": "ja",
   "start_url": "/admin/diary?source=pwa",
   "scope": "/admin/diary",

@@ -7,7 +7,7 @@ import { formatPostedAt } from '../../../../lib/diary/format';
 
 const post = await getPost(Astro.params.id ?? '');
 if (!post) {
-  return new Response('日記が見つかりません', {
+  return new Response('投稿が見つかりません', {
     status: 404,
     headers: { 'Content-Type': 'text/plain; charset=utf-8' },
   });
@@ -15,12 +15,12 @@ if (!post) {
 const previews = await getLinkPreviews(post.links);
 ---
 
-<Layout title="日記を編集" appleTouchIcon="/diary-app/apple-touch-icon.png">
+<Layout title="投稿を編集" appleTouchIcon="/diary-app/apple-touch-icon.png">
   <DiaryAppHead slot="head" />
   <div class="mb-4">
     <a href="/admin/diary" class="text-black dark:text-white underline hover:no-underline">投稿画面に戻る</a>
   </div>
-  <h1 class="mb-1 text-2xl font-bold">日記を編集</h1>
+  <h1 class="mb-1 text-2xl font-bold">投稿を編集</h1>
   <p class="mb-4 text-sm text-gray-500 dark:text-neutral-400">{formatPostedAt(post.publishedAt)} の投稿</p>
   <Composer post={post} previews={previews} />
 </Layout>

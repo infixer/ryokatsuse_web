@@ -29,12 +29,10 @@ const linkify = (line: string): string => {
 };
 
 /**
- * 本文を HTML にする。
- * - 改行はそのまま（表示側で white-space: pre-wrap）
- * - URL は自動でリンクにする
- * - リンクカードとして下に出す URL だけの行は、本文から省く（二重に見えないように）
+ * 表示する行だけを返す。
+ * リンクカードとして下に出す URL だけの行は、本文から省く（二重に見えないように）。
  */
-export const renderDiaryBody = (body: string, cardUrls: string[]): string => {
+const visibleLines = (body: string, cardUrls: string[]): string[] => {
   const cards = new Set(cardUrls);
   const lines = body.split(/\r?\n/).filter((line) => !cards.has(line.trim()));
 
@@ -42,8 +40,20 @@ export const renderDiaryBody = (body: string, cardUrls: string[]): string => {
   while (lines.length > 0 && lines[0].trim() === '') lines.shift();
   while (lines.length > 0 && lines.at(-1)?.trim() === '') lines.pop();
 
-  return lines.map(linkify).join('\n');
+  return lines;
 };
+
+/**
+ * 本文を HTML にする。
+ * - 改行はそのまま（表示側で white-space: pre-wrap）
+ * - URL は自動でリンクにする
+ */
+export const renderDiaryBody = (body: string, cardUrls: string[]): string =>
+  visibleLines(body, cardUrls).map(linkify).join('\n');
+
+/** 本文をプレーンテキストで返す（投稿全体をリンクにするトップのフィードなど、本文中にリンクを置けない場所用） */
+export const plainDiaryBody = (body: string, cardUrls: string[]): string =>
+  visibleLines(body, cardUrls).join('\n');
 
 /** OGP やメタ description 用の短い抜粋 */
 export const excerpt = (body: string, length = 100): string => {

@@ -1,6 +1,7 @@
 ---
 import Layout from '../../../../components/Layout.astro';
 import Composer from '../../../../components/diary/Composer.astro';
+import DiaryAppHead from '../../../../components/diary/DiaryAppHead.astro';
 import { getLinkPreviews, getPost } from '../../../../lib/diary/db';
 import { formatPostedAt } from '../../../../lib/diary/format';
 
@@ -14,7 +15,8 @@ if (!post) {
 const previews = await getLinkPreviews(post.links);
 ---
 
-<Layout title="日記を編集">
+<Layout title="日記を編集" appleTouchIcon="/diary-app/apple-touch-icon.png">
+  <DiaryAppHead slot="head" />
   <div class="mb-4">
     <a href="/admin/diary" class="text-black dark:text-white underline hover:no-underline">投稿画面に戻る</a>
   </div>

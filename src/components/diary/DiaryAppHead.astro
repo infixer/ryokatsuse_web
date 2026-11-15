@@ -1,0 +1,24 @@
+---
+// 日記の投稿画面をホーム画面に追加できるようにする（PWA）。
+// マニフェストは Access の認証が掛からない /diary-app/ に置く（ブラウザは Cookie なしで取得するため）。
+---
+
+<link rel="manifest" href="/diary-app/manifest.webmanifest" />
+<meta name="theme-color" content="#262626" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="日記" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+
+<style is:global>
+  /* ホーム画面から開いたとき（standalone）は、サイト全体のヘッダー・フッターを出さずアプリのように見せる */
+  @media (display-mode: standalone) {
+    #site-header,
+    body > footer {
+      display: none !important;
+    }
+
+    body {
+      padding-top: env(safe-area-inset-top) !important;
+    }
+  }
+</style>

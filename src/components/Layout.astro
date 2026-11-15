@@ -13,6 +13,8 @@ export interface Props {
   twitterCard?: 'summary' | 'summary_large_image';
   /** コンテンツ幅を少し広げる（トップページ用） */
   wide?: boolean;
+  /** ホーム画面に追加したときのアイコン（日記の投稿画面だけ差し替える） */
+  appleTouchIcon?: string;
 }
 
 const siteTitle = SITE_TITLE;
@@ -24,6 +26,7 @@ const {
   image,
   twitterCard = 'summary_large_image',
   wide = false,
+  appleTouchIcon = '/apple-touch-icon.png',
 } = Astro.props as Props;
 let canonicalURL: URL = new URL(Astro.url.pathname, Astro.site);
 
@@ -60,7 +63,7 @@ let canonicalURL: URL = new URL(Astro.url.pathname, Astro.site);
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" href={appleTouchIcon} />
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <meta name="generator" content={Astro.generator} />
     <link rel="alternate" href="/posts-feed.xml" type="application/rss+xml" />
@@ -86,6 +89,8 @@ let canonicalURL: URL = new URL(Astro.url.pathname, Astro.site);
     <meta name="twitter:description" content={description} />
     {image && <meta name="twitter:image" content={new URL(image, Astro.url)} />}
     {canonicalURL && <link rel="canonical" href={canonicalURL} />}
+    <!-- ページ固有の head 要素（日記の投稿画面のマニフェストなど） -->
+    <slot name="head" />
   </head>
   <body class="dark:bg-neutral-800 dark:text-gray-50 font-noto-sans pt-14">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-white focus:text-black focus:px-3 focus:py-2 focus:outline-2 focus:outline-blue-500 dark:focus:bg-neutral-900 dark:focus:text-white">本文へスキップ</a>

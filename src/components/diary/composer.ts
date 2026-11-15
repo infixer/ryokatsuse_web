@@ -439,6 +439,29 @@ export const initComposer = (form: HTMLFormElement) => {
     }
   });
 
+  /**
+   * Android の「共有」からホーム画面の日記アプリに送られてきた内容を取り込む（manifest の share_target）。
+   * URL はリンクカードにし、URL 以外の文章があれば本文の末尾に足す。ページタイトルはカードに出るので使わない。
+   */
+  const applySharedContent = () => {
+    const params = new URLSearchParams(location.search);
+    const sharedText = params.get('text')?.trim() ?? '';
+    const sharedUrl =
+      params.get('url')?.trim() ||
+      sharedText.match(/https?:\/\/\S+/)?.[0] ||
+      '';
+    if (!sharedText && !sharedUrl) return;
+
+    const rest = sharedText.replace(sharedUrl, '').trim();
+    if (rest) {
+      textarea.value = textarea.value ? `${textarea.value}\n${rest}` : rest;
+    }
+    if (SINGLE_URL.test(sharedUrl)) void addLink(sharedUrl);
+
+    // 再読み込みで二重に取り込まないよう、URL からクエリを消す
+    history.replaceState(null, '', location.pathname);
+  };
+
   // ---- 初期表示 ----
 
   const initialImages = JSON.parse(form.dataset.initialImages ?? '[]') as Omit<
@@ -458,6 +481,7 @@ export const initComposer = (form: HTMLFormElement) => {
         setStatus('書きかけの日記を復元しました');
       }
     }
+    applySharedContent();
     textarea.focus();
   }
 

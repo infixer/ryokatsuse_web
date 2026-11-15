@@ -27,6 +27,24 @@ PC・スマホ・タブレットのブラウザから、SNS に書くくらい�
 - **投稿**：「投稿する」ボタンか ⌘/Ctrl + Enter。スマホでは、本文が長くなってもツールバーが画面の下に残る
 - **下書き**：新規投稿の書きかけは localStorage に自動保存し、次に開いたときに復元する
 
+## ホーム画面から開く（PWA）
+
+投稿画面（`/admin/diary` 以下）だけを PWA にして、スマホのホーム画面からワンタップで開けるようにしている。
+
+- マニフェストは `public/diary-app/manifest.webmanifest`。scope と start_url は `/admin/diary`
+  - ブラウザは Cookie なしでマニフェストを取りに行くため、Access で保護していない `/diary-app/` に置いている
+- アイコンは `scripts/generate-diary-icons.mts` で生成する（`pnpm exec tsx scripts/generate-diary-icons.mts`）
+- ホーム画面から開いたとき（`display-mode: standalone`）は、サイト全体のヘッダーとフッターを隠す
+- **Android**：他のアプリの「共有」から日記を選ぶと、URL はリンクカードに、それ以外の文章は本文に入った状態で投稿画面が開く（`share_target`）。iOS は Web アプリの共有先に対応していない
+- Service Worker は持たない（オフラインで書く必要がないため）。書きかけは localStorage に残る
+
+追加のしかた：
+
+- iPhone / iPad：Safari で `/admin/diary` を開き、共有 → 「ホーム画面に追加」
+- Android：Chrome で開き、メニュー → 「ホーム画面に追加」（または「アプリをインストール」）
+
+iPhone のホーム画面から開いたアプリは Safari と Cookie を共有しないため、初回はアプリの中で Access のログインがもう一度必要になる。何度もログインしなくて済むよう、Access のアプリケーションの Session Duration を長め（例：1 か月）にしておくとよい。
+
 ## 表示（SNS 風）
 
 1 投稿は「アイコン・名前・日時 → 本文 → 画像 → リンクカード」の順に並ぶ。

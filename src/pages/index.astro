@@ -4,6 +4,7 @@ export const prerender = true;
 import { type CollectionEntry, getCollection } from 'astro:content';
 import Layout from '../components/Layout.astro';
 import FeedTimeline from '../components/diary/FeedTimeline.astro';
+import FeedRssLink from '../components/diary/FeedRssLink.astro';
 import Materials from '../components/Materials.astro';
 import PoemList from '../components/PoemList.astro';
 import PostList from '../components/PostList.astro';
@@ -121,7 +122,10 @@ const blogEntries: BlogEntry[] = allBlogEntries.slice(0, 4).map(
 
     <aside class="mt-12 lg:mt-0" aria-labelledby="feed-heading">
       <div class="mb-4 flex items-baseline justify-between gap-4">
-        <h2 id="feed-heading" class="text-2xl font-bold">フィード</h2>
+        <div class="flex items-center gap-2">
+          <h2 id="feed-heading" class="text-2xl font-bold">フィード</h2>
+          <FeedRssLink />
+        </div>
         <a class="text-sm text-black underline hover:no-underline dark:text-white" href="/feed">すべて見る</a>
       </div>
       <p class="mb-6 text-sm text-gray-600 dark:text-neutral-300">日々のことを短く書いています。</p>

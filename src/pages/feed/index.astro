@@ -1,6 +1,7 @@
 ---
 import Layout from '../../components/Layout.astro';
 import DiaryPost from '../../components/diary/DiaryPost.astro';
+import FeedRssLink from '../../components/diary/FeedRssLink.astro';
 import { getLinkPreviews, listPosts } from '../../lib/diary/db';
 
 // 投稿してすぐ反映させるため、リクエストごとに描画する
@@ -12,7 +13,11 @@ const description = '日々のことを短く書いているフィードです�
 ---
 
 <Layout title="フィード" description={description}>
-  <h1 class="text-2xl font-bold mb-2">フィード</h1>
+  <link slot="head" rel="alternate" href="/feed/rss.xml" type="application/rss+xml" title="infixer.net フィード" />
+  <div class="mb-2 flex items-center gap-2">
+    <h1 class="text-2xl font-bold">フィード</h1>
+    <FeedRssLink />
+  </div>
   <p class="mb-4 text-gray-600 dark:text-neutral-300">{description}</p>
 
   {posts.length === 0 ? (

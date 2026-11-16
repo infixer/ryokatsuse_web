@@ -9,6 +9,7 @@ type UploadedImage = {
   width: number;
   height: number;
   url: string;
+  alt?: string;
 };
 type Draft = { body: string; images: UploadedImage[]; links: string[] };
 
@@ -145,6 +146,9 @@ export const initComposer = (form: HTMLFormElement) => {
         width: Number(item.dataset.width),
         height: Number(item.dataset.height),
         url: item.dataset.url!,
+        alt:
+          item.querySelector<HTMLInputElement>('.composer-alt')?.value.trim() ??
+          '',
       }));
 
   const links = () => linkItems().map((item) => item.dataset.url!);
@@ -185,10 +189,13 @@ export const initComposer = (form: HTMLFormElement) => {
 
   // ---- 画像 ----
 
-  const createImageItem = (src: string) => {
+  const createImageItem = (src: string, alt = '') => {
+    // 画像（正方形の枠）と、その下の代替テキスト欄
     const item = document.createElement('div');
-    item.className =
-      'composer-image relative aspect-square overflow-hidden rounded-lg bg-gray-100 dark:bg-neutral-800';
+    item.className = 'composer-image';
+    const frame = document.createElement('div');
+    frame.className =
+      'relative aspect-square overflow-hidden rounded-lg bg-gray-100 dark:bg-neutral-800';
     const img = document.createElement('img');
     img.src = src;
     img.alt = '';
@@ -203,7 +210,18 @@ export const initComposer = (form: HTMLFormElement) => {
       'composer-remove absolute right-1.5 top-1.5 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-black/70 text-white hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600';
     remove.setAttribute('aria-label', '画像を削除');
     remove.innerHTML = closeIcon;
-    item.append(img, overlay, remove);
+    frame.append(img, overlay, remove);
+
+    const altInput = document.createElement('input');
+    altInput.type = 'text';
+    altInput.className =
+      'composer-alt mt-1.5 block w-full rounded-md border border-gray-300 bg-transparent px-2 py-1 text-sm placeholder:text-gray-400 focus:border-blue-600 focus:outline-none dark:border-neutral-600 dark:placeholder:text-neutral-500';
+    altInput.placeholder = '画像の説明（alt）';
+    altInput.maxLength = 1000;
+    altInput.value = alt;
+    altInput.setAttribute('aria-label', '画像の説明（代替テキスト）');
+
+    item.append(frame, altInput);
     imagesEl.append(item);
     return item;
   };
@@ -216,7 +234,7 @@ export const initComposer = (form: HTMLFormElement) => {
   };
 
   const showUploaded = (image: UploadedImage) => {
-    const item = createImageItem(image.url);
+    const item = createImageItem(image.url, image.alt);
     Object.assign(item.dataset, {
       key: image.key,
       width: String(image.width),
@@ -362,6 +380,23 @@ export const initComposer = (form: HTMLFormElement) => {
     update();
   });
 
+  // 代替テキストの入力も書きかけとして保存する
+  imagesEl.addEventListener('input', (event) => {
+    if ((event.target as Element).classList.contains('composer-alt')) update();
+  });
+
+  // 代替テキスト欄で Enter を押してもフォームを送信しない（⌘ / Ctrl + Enter は投稿）
+  imagesEl.addEventListener('keydown', (event) => {
+    if (
+      !(event.target as Element).classList.contains('composer-alt') ||
+      event.key !== 'Enter' ||
+      event.isComposing
+    )
+      return;
+    event.preventDefault();
+    if (event.metaKey || event.ctrlKey) form.requestSubmit();
+  });
+
   textarea.addEventListener('paste', (event) => {
     const data = event.clipboardData;
     if (!data) return;
@@ -447,10 +482,11 @@ export const initComposer = (form: HTMLFormElement) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             body: textarea.value,
-            images: uploadedImages().map(({ key, width, height }) => ({
+            images: uploadedImages().map(({ key, width, height, alt }) => ({
               key,
               width,
               height,
+              alt,
             })),
             links: links(),
           }),

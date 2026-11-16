@@ -9,7 +9,7 @@ INSERT OR REPLACE INTO diary_posts (id, body, images, links, published_at, creat
 段落を分けて書いてみる。
 URL を本文に書くとリンクになる https://example.com/inline', '[]', '[]',
    '2026-11-03T12:30:00Z', '2026-11-03T12:30:00Z', '2026-11-03T12:30:00Z'),
-  ('seed000003', '画像付きの投稿。', '[{"key":"diary/seed/sample.jpg","width":1012,"height":506}]', '[]',
+  ('seed000003', '画像付きの投稿。', '[{"key":"diary/seed/sample.jpg","width":1012,"height":506,"alt":"テスト用のサンプル画像"}]', '[]',
    '2026-11-05T09:15:00Z', '2026-11-05T09:15:00Z', '2026-11-05T09:15:00Z'),
   ('seed000004', 'リンクカード付きの投稿。
 https://astro.build/', '[]', '["https://astro.build/"]',

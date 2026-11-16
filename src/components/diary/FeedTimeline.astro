@@ -77,7 +77,7 @@ try {
                   src={`/media/${image.key}`}
                   width={image.width}
                   height={image.height}
-                  alt=""
+                  alt={image.alt ?? ''}
                   loading="lazy"
                   decoding="async"
                   class="aspect-video w-full object-cover"

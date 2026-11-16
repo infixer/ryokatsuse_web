@@ -32,13 +32,17 @@ const singleRatio = single
         'block min-h-0 overflow-hidden bg-gray-100 dark:bg-neutral-800',
         count === 3 && index === 0 && 'row-span-2',
       ]}
-      aria-label={`画像 ${index + 1} / ${count} を開く`}
+      aria-label={
+        image.alt
+          ? `${image.alt}（画像 ${index + 1} / ${count} を開く）`
+          : `画像 ${index + 1} / ${count} を開く`
+      }
     >
       <img
         src={`/media/${image.key}`}
         width={image.width}
         height={image.height}
-        alt=""
+        alt={image.alt ?? ''}
         loading="lazy"
         decoding="async"
         class="h-full w-full object-cover"

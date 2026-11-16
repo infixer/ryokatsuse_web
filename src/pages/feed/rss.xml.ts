@@ -32,7 +32,7 @@ export async function GET(context: APIContext) {
       const images = post.images
         .map((image) => {
           const src = new URL(`/media/${image.key}`, site).toString();
-          return `<p><img src="${escapeHtml(src)}" width="${image.width}" height="${image.height}" alt=""></p>`;
+          return `<p><img src="${escapeHtml(src)}" width="${image.width}" height="${image.height}" alt="${escapeHtml(image.alt ?? '')}"></p>`;
         })
         .join('');
       const links = post.links

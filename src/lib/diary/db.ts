@@ -7,6 +7,8 @@ export type DiaryImage = {
   key: string;
   width: number;
   height: number;
+  /** 代替テキスト。alt 導入前の投稿には無い */
+  alt?: string;
 };
 
 export type DiaryPost = {

@@ -26,6 +26,8 @@ const inputSchema = z
           key: z.string().regex(/^diary\/[\w/-]+\.(webp|jpe?g|png|gif)$/),
           width: z.number().int().positive(),
           height: z.number().int().positive(),
+          // 空なら装飾扱い（alt=""）で表示する
+          alt: z.string().trim().max(1000).default(''),
         }),
       )
       .max(MAX_IMAGES)

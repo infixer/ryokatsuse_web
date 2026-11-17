@@ -1,46 +1,40 @@
 ---
 // 検索モーダル。トリガー側からは `search:open` カスタムイベントで開く。
-// 閉じた際は `search:closed` をディスパッチする（呼び出し側が aria-expanded やフォーカス復帰を扱える）。
+// 閉じた際は `search:closed` をディスパッチする（呼び出し側が aria-expanded を扱える）。
+// <dialog> の showModal() で開くので、外側の inert 化・Esc で閉じる・閉じたときのフォーカス復帰はブラウザが行う。
 ---
 
-<div
-  id="search-modal"
-  class="fixed inset-0 bg-black/70 hidden flex items-center justify-center"
-  role="dialog"
-  aria-modal="true"
-  aria-labelledby="search-modal-title"
->
-  <div class="relative w-full max-w-3xl mx-auto px-4">
-    <div class="bg-neutral-800 rounded-lg shadow-xl p-6">
-      <h2 id="search-modal-title" class="sr-only">記事を検索</h2>
-      <div class="flex items-center mb-4">
-        <svg class="text-white mr-3" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+<dialog id="search-modal" aria-labelledby="search-modal-title" class="w-full max-w-3xl m-auto px-4 bg-transparent">
+  <div class="bg-neutral-800 rounded-lg shadow-xl p-6">
+    <h2 id="search-modal-title" class="sr-only">記事を検索</h2>
+    <div class="flex items-center mb-4">
+      <svg class="text-white mr-3" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <label for="search-input" class="sr-only">記事を検索</label>
+      <input
+        type="search"
+        id="search-input"
+        autofocus
+        placeholder="記事を検索..."
+        class="w-full px-3 py-2 rounded text-sm bg-neutral-700 text-white border border-neutral-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:border-neutral-500"
+      />
+      <button id="close-search" class="ml-3 text-white hover:text-gray-300" aria-label="検索を閉じる">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
         </svg>
-        <label for="search-input" class="sr-only">記事を検索</label>
-        <input
-          type="search"
-          id="search-input"
-          placeholder="記事を検索..."
-          class="w-full px-3 py-2 rounded text-sm bg-neutral-700 text-white border border-neutral-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:border-neutral-500"
-        />
-        <button id="close-search" class="ml-3 text-white hover:text-gray-300" aria-label="検索を閉じる">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </div>
-      <div id="search-results" class="overflow-y-auto"></div>
+      </button>
     </div>
+    <div id="search-results" class="overflow-y-auto"></div>
   </div>
-</div>
+</dialog>
 
 <script>
   import { fetchBlogPosts, searchPosts, generateSearchResultsHtml, type BlogPost } from '../lib/search';
 
-  const searchModal = document.getElementById('search-modal') as HTMLDivElement;
+  const searchModal = document.getElementById('search-modal') as HTMLDialogElement;
   const searchInput = document.getElementById('search-input') as HTMLInputElement;
   const searchResultsElement = document.getElementById('search-results') as HTMLDivElement;
   const closeSearch = document.getElementById('close-search') as HTMLButtonElement;
@@ -64,9 +58,8 @@
   };
 
   const openSearchModal = async (): Promise<void> => {
-    searchModal.classList.remove('hidden');
+    searchModal.showModal();
     document.body.classList.add('overflow-hidden');
-    searchInput.focus();
 
     if (!isDataLoaded) {
       blogPosts = await fetchBlogPosts();
@@ -74,68 +67,30 @@
     }
   };
 
-  const closeSearchModal = (): void => {
-    searchModal.classList.add('hidden');
+  // Esc・閉じるボタン・背景クリックのどれで閉じても close イベントで後片付けする
+  searchModal.addEventListener('close', () => {
     document.body.classList.remove('overflow-hidden');
     searchInput.value = '';
     searchResultsElement.innerHTML = '';
     document.dispatchEvent(new CustomEvent('search:closed'));
-  };
-
-  document.addEventListener('search:open', openSearchModal);
-  closeSearch.addEventListener('click', closeSearchModal);
-  searchInput.addEventListener('input', () => showSearchResults(searchInput.value));
-
-  // モーダル内のフォーカス可能要素を取得（検索結果のリンクは動的に変わるので毎回取得）
-  const getFocusableElements = (): HTMLElement[] => {
-    const selector = 'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])';
-    return Array.from(searchModal.querySelectorAll<HTMLElement>(selector));
-  };
-
-  // モーダル open 中のキー操作: ESC で閉じる、Tab でフォーカストラップ
-  document.addEventListener('keydown', (event) => {
-    if (searchModal.classList.contains('hidden')) return;
-
-    if (event.key === 'Escape') {
-      closeSearchModal();
-      return;
-    }
-
-    if (event.key !== 'Tab') return;
-
-    const focusable = getFocusableElements();
-    if (focusable.length === 0) return;
-
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    const active = document.activeElement as HTMLElement | null;
-    const isInsideModal = active && searchModal.contains(active);
-
-    if (event.shiftKey) {
-      if (!isInsideModal || active === first) {
-        event.preventDefault();
-        last.focus();
-      }
-    } else {
-      if (!isInsideModal || active === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    }
   });
 
-  // モーダル外をクリックしたら閉じる
+  document.addEventListener('search:open', openSearchModal);
+  closeSearch.addEventListener('click', () => searchModal.close());
+  searchInput.addEventListener('input', () => showSearchResults(searchInput.value));
+
+  // 背景（::backdrop）をクリックしたら閉じる。::backdrop へのクリックは dialog 自身が target になる
   searchModal.addEventListener('click', (event) => {
     if (event.target === searchModal) {
-      closeSearchModal();
+      searchModal.close();
     }
   });
 </script>
 
 <style>
-  #search-modal {
+  #search-modal::backdrop {
+    background-color: rgb(0 0 0 / 0.7);
     backdrop-filter: blur(4px);
-    z-index: var(--z-modal);
   }
 
   #search-results {

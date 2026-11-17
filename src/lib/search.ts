@@ -68,7 +68,7 @@ export const generateSearchResultsHtml = (
       const cleanSlug = post.slug.replace(/\.(md|mdx|astro)$/i, '');
 
       return `
-        <a href="/blog/${cleanSlug}" class="block p-3 hover:bg-neutral-600 text-white">
+        <a href="/blog/${cleanSlug}" class="block p-3 rounded hover:bg-neutral-600 text-white focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-400">
           <div class="font-medium">${post.data.title}</div>
           <div class="text-xs text-gray-300">${post.data.publishDate}</div>
         </a>

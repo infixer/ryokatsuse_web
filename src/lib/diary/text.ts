@@ -51,6 +51,57 @@ const visibleLines = (body: string, cardUrls: string[]): string[] => {
 export const renderDiaryBody = (body: string, cardUrls: string[]): string =>
   visibleLines(body, cardUrls).map(linkify).join('\n');
 
+/** 本文を、文章とリンクカードが並んだブロックに分けたもの */
+export type DiaryBlock =
+  | { type: 'text'; html: string }
+  | { type: 'card'; url: string };
+
+/** 先頭・末尾の空行を落とす */
+const trimBlankLines = (lines: string[]): string[] => {
+  const result = [...lines];
+  while (result.length > 0 && result[0].trim() === '') result.shift();
+  while (result.length > 0 && result.at(-1)?.trim() === '') result.pop();
+  return result;
+};
+
+/**
+ * 本文をブロックに分ける。リンクカードの URL だけの行は、その位置にカードを置く。
+ * 本文に行が無いカード（URL を本文に入れていなかった頃の投稿）は rest で返すので、末尾にまとめて出す。
+ */
+export const renderDiaryBlocks = (
+  body: string,
+  cardUrls: string[],
+): { blocks: DiaryBlock[]; rest: string[] } => {
+  const cards = new Set(cardUrls);
+  const placed = new Set<string>();
+  const blocks: DiaryBlock[] = [];
+  let buffer: string[] = [];
+
+  const flush = () => {
+    const lines = trimBlankLines(buffer);
+    if (lines.length > 0) {
+      blocks.push({ type: 'text', html: lines.map(linkify).join('\n') });
+    }
+    buffer = [];
+  };
+
+  for (const line of body.split(/\r?\n/)) {
+    const url = line.trim();
+    if (!cards.has(url)) {
+      buffer.push(line);
+      continue;
+    }
+    // 同じ URL の行が 2 回あっても、カードは最初の位置に 1 枚だけ置く
+    if (placed.has(url)) continue;
+    flush();
+    blocks.push({ type: 'card', url });
+    placed.add(url);
+  }
+  flush();
+
+  return { blocks, rest: cardUrls.filter((url) => !placed.has(url)) };
+};
+
 /** 本文をプレーンテキストで返す（投稿全体をリンクにするトップのフィードなど、本文中にリンクを置けない場所用） */
 export const plainDiaryBody = (body: string, cardUrls: string[]): string =>
   visibleLines(body, cardUrls).join('\n');

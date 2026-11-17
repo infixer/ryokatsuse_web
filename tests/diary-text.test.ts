@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { excerpt, plainDiaryBody, renderDiaryBody } from '../src/lib/diary/text';
+import {
+  excerpt,
+  plainDiaryBody,
+  renderDiaryBlocks,
+  renderDiaryBody,
+} from '../src/lib/diary/text';
 
 test('改行を残し、HTML はエスケープする', () => {
   assert.equal(
@@ -39,5 +44,43 @@ test('プレーンテキスト版はリンクにせず、カードの行だけ�
       'https://example.com/card',
     ]),
     '見た https://example.com/a',
+  );
+});
+
+test('リンクカードは URL だけの行の位置に置き、前後の空行は落とす', () => {
+  assert.deepEqual(
+    renderDiaryBlocks('前の文\n\nhttps://example.com/\n\n後ろの文', [
+      'https://example.com/',
+    ]),
+    {
+      blocks: [
+        { type: 'text', html: '前の文' },
+        { type: 'card', url: 'https://example.com/' },
+        { type: 'text', html: '後ろの文' },
+      ],
+      rest: [],
+    },
+  );
+});
+
+test('本文に行が無いカードは rest で返す', () => {
+  assert.deepEqual(
+    renderDiaryBlocks('本文だけ', ['https://example.com/']),
+    {
+      blocks: [{ type: 'text', html: '本文だけ' }],
+      rest: ['https://example.com/'],
+    },
+  );
+});
+
+test('同じ URL の行が 2 回あってもカードは最初の位置に 1 枚だけ', () => {
+  assert.deepEqual(
+    renderDiaryBlocks('https://example.com/\nあいだ\nhttps://example.com/', [
+      'https://example.com/',
+    ]).blocks,
+    [
+      { type: 'card', url: 'https://example.com/' },
+      { type: 'text', html: 'あいだ' },
+    ],
   );
 });

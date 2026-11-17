@@ -325,8 +325,8 @@ export const initComposer = (form: HTMLFormElement) => {
       placeholder.replaceWith(card);
     } catch {
       placeholder.remove();
-      // カードにできなかった URL は本文に戻して、書いた内容を失わないようにする
-      insertText(url);
+      // カードにできなかった URL は本文に残して、書いた内容を失わないようにする
+      if (!hasUrlLine(url)) insertText(url);
       setStatus('リンクカードを作れなかったので、本文に貼り付けました', true);
     } finally {
       update();
@@ -373,6 +373,33 @@ export const initComposer = (form: HTMLFormElement) => {
     textarea.dispatchEvent(new Event('input'));
   };
 
+  /** 本文に、その URL だけの行があるか */
+  const hasUrlLine = (url: string) =>
+    textarea.value.split(/\r?\n/).some((line) => line.trim() === url);
+
+  /**
+   * カーソル位置に URL を 1 行として入れる。表示ではこの行の位置にリンクカードが出る。
+   * 前後が行の途中なら改行を足して、URL だけの行にする。
+   */
+  const insertUrlLine = (url: string) => {
+    const { value, selectionStart, selectionEnd } = textarea;
+    const before = value.slice(0, selectionStart);
+    const after = value.slice(selectionEnd);
+    const prefix = before === '' || before.endsWith('\n') ? '' : '\n';
+    const suffix = after.startsWith('\n') ? '' : '\n';
+    insertText(`${prefix}${url}${suffix}`);
+  };
+
+  /** URL だけの行を本文から消す（カードを外したとき） */
+  const removeUrlLine = (url: string) => {
+    const lines = textarea.value.split('\n');
+    const index = lines.findIndex((line) => line.trim() === url);
+    if (index === -1) return;
+    lines.splice(index, 1);
+    textarea.value = lines.join('\n');
+    textarea.dispatchEvent(new Event('input'));
+  };
+
   // ---- イベント ----
 
   textarea.addEventListener('input', () => {
@@ -411,9 +438,11 @@ export const initComposer = (form: HTMLFormElement) => {
     }
 
     // URL だけを貼ったときはリンクカードにする（文章の中に URL を混ぜたいときは手で打てばよい）
+    // 貼った位置に URL の行を入れておき、表示ではその位置にカードを出す
     const text = data.getData('text/plain').trim();
     if (SINGLE_URL.test(text)) {
       event.preventDefault();
+      if (!links().includes(text)) insertUrlLine(text);
       void addLink(text);
     }
   });
@@ -460,7 +489,11 @@ export const initComposer = (form: HTMLFormElement) => {
     const button = (event.target as Element).closest('.composer-remove');
     if (!button) return;
     event.preventDefault();
-    button.closest('.composer-image, .composer-link')?.remove();
+    const item = button.closest<HTMLElement>('.composer-image, .composer-link');
+    if (item?.classList.contains('composer-link') && item.dataset.url) {
+      removeUrlLine(item.dataset.url);
+    }
+    item?.remove();
     update();
   });
 
@@ -526,8 +559,11 @@ export const initComposer = (form: HTMLFormElement) => {
     if (!sharedText && !sharedUrl) return;
 
     const rest = sharedText.replace(sharedUrl, '').trim();
-    if (rest) {
-      textarea.value = textarea.value ? `${textarea.value}\n${rest}` : rest;
+    const shared = SINGLE_URL.test(sharedUrl)
+      ? [rest, sharedUrl].filter(Boolean).join('\n')
+      : rest;
+    if (shared) {
+      textarea.value = textarea.value ? `${textarea.value}\n${shared}` : shared;
     }
     if (SINGLE_URL.test(sharedUrl)) void addLink(sharedUrl);
 

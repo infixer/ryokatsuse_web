@@ -3,7 +3,7 @@ import LinkCardView from '../LinkCardView.astro';
 import type { OgpData } from '../../lib/ogp';
 import type { DiaryPost } from '../../lib/diary/db';
 import { formatPostedAt } from '../../lib/diary/format';
-import { renderDiaryBody } from '../../lib/diary/text';
+import { renderDiaryBlocks } from '../../lib/diary/text';
 import DiaryImages from './DiaryImages.astro';
 
 export interface Props {
@@ -14,8 +14,21 @@ export interface Props {
 }
 
 const { post, previews, detail = false } = Astro.props;
-const html = renderDiaryBody(post.body, post.links);
+// リンクカードは本文で URL を書いた位置に出す。位置の分からないカードは画像の後ろにまとめる
+const { blocks, rest } = renderDiaryBlocks(post.body, post.links);
 const postedAt = formatPostedAt(post.publishedAt);
+
+const cardProps = (url: string) => {
+  const ogp = previews.get(url);
+  return {
+    url,
+    title: ogp?.title ?? new URL(url).hostname,
+    description: ogp?.description,
+    thumbnail: ogp?.image,
+    siteName: ogp?.siteName,
+    faviconUrl: ogp?.faviconUrl,
+  };
+};
 ---
 
 <article class="diary-post flex gap-3 border-b border-gray-200 py-5 dark:border-neutral-700" data-post-id={post.id}>
@@ -42,32 +55,24 @@ const postedAt = formatPostedAt(post.publishedAt);
       )}
     </header>
 
-    {html && (
-      <div
-        class:list={[
-          'diary-body mt-1 whitespace-pre-wrap break-words tracking-[0.02em]',
-          detail ? 'text-lg leading-8' : 'text-base leading-7',
-        ]}
-        set:html={html}
-      />
+    {blocks.map((block, index) =>
+      block.type === 'text' ? (
+        <div
+          class:list={[
+            'diary-body whitespace-pre-wrap break-words tracking-[0.02em]',
+            index === 0 ? 'mt-1' : 'mt-3',
+            detail ? 'text-lg leading-8' : 'text-base leading-7',
+          ]}
+          set:html={block.html}
+        />
+      ) : (
+        <LinkCardView class="mt-3" {...cardProps(block.url)} />
+      ),
     )}
 
     {post.images.length > 0 && <DiaryImages images={post.images} />}
 
-    {post.links.map((url) => {
-      const ogp = previews.get(url);
-      return (
-        <LinkCardView
-          class="mt-3"
-          url={url}
-          title={ogp?.title ?? new URL(url).hostname}
-          description={ogp?.description}
-          thumbnail={ogp?.image}
-          siteName={ogp?.siteName}
-          faviconUrl={ogp?.faviconUrl}
-        />
-      );
-    })}
+    {rest.map((url) => <LinkCardView class="mt-3" {...cardProps(url)} />)}
 
     <slot />
   </div>

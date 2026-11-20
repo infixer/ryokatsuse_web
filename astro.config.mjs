@@ -1,7 +1,6 @@
 import { defineConfig, fontProviders } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 import sitemap from '@astrojs/sitemap';
-import react from '@astrojs/react';
 import mdx from '@astrojs/mdx';
 import cloudflare from '@astrojs/cloudflare';
 import { markdownComponents } from './src/integrations/markdown-components';
@@ -27,7 +26,6 @@ export default defineConfig({
   }),
   integrations: [
     sitemap(),
-    react(),
     mdx({
       // MDXファイルでグローバルに使用できるコンポーネントを設定
       components: {
@@ -71,7 +69,6 @@ export default defineConfig({
     },
     // 解決方法を明示的に設定
     resolve: {
-      dedupe: ['react', 'react-dom'],
       alias: {
         // @libsql/hrana-client が cross-fetch(node-fetch) を掴むと Workers 上で落ちる
         'cross-fetch': new URL('./src/lib/cross-fetch-shim.ts', import.meta.url).pathname,

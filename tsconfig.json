@@ -2,7 +2,8 @@
   "extends": "astro/tsconfigs/strict",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "jsxImportSource": "react",
+    // OgImage.tsx の JSX は React ではなく satori 同梱の JSX ランタイムで変換する
+    "jsxImportSource": "satori/jsx",
     "verbatimModuleSyntax": true,
     "baseUrl": ".",
     "paths": {

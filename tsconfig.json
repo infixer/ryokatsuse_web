@@ -5,11 +5,18 @@
     // OgImage.tsx の JSX は React ではなく satori 同梱の JSX ランタイムで変換する
     "jsxImportSource": "satori/jsx",
     "verbatimModuleSyntax": true,
-    "baseUrl": ".",
+    // TypeScript 7 で baseUrl は削除されたため、paths は tsconfig からの相対パスで書く
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   },
+  // TypeScript 7.1+ の content mapper で .astro を tsc から型チェックする（実験的）
+  "contentMappers": [
+    {
+      "package": "@astrojs/ts-content-mapper",
+      "extensions": [".astro"]
+    }
+  ],
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.astro"],
   "exclude": ["node_modules", "dist"]
 }

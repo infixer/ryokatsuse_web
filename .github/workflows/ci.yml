@@ -24,7 +24,7 @@ jobs:
       - run: pnpm lint
 
   astro-check:
-    name: Astro Check
+    name: Type Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,7 +40,7 @@ jobs:
 
       - run: pnpm astro sync
 
-      - run: pnpm astro check
+      - run: pnpm typecheck
 
       - run: pnpm test:images
 

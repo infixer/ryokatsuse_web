@@ -42,7 +42,6 @@
     "micromark-extension-mdxjs": "^3.0.0",
     "postcss": ">=8.4.29 <9.0.0",
     "prismjs": "^1.30.0",
-    "react": "^18.0.0",
     "satori": "^0.33.5",
     "shiki": "^4.0.2"
   },
@@ -56,7 +55,6 @@
     "@infixer/cli": "workspace:*",
     "@tailwindcss/vite": "^4.2.4",
     "@types/mdast": "^4.0.4",
-    "@types/react": "^18.2.48",
     "mdast-util-to-hast": "^13.2.0",
     "oxfmt": "^0.72.0",
     "oxlint": "^1.87.0",

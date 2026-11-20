@@ -21,6 +21,7 @@
     "test:slides:layout": "tsx --test tests/slides-layout.test.ts",
     "infixer": "infixer",
     "test:cli": "pnpm --filter @infixer/cli test",
+    "typecheck": "tsc --noEmit --runExternalCode",
     "typecheck:packages": "tsc -p packages/core && tsc -p packages/cli"
   },
   "dependencies": {
@@ -31,7 +32,7 @@
     "@infixer/core": "workspace:*",
     "@libsql/client": "^0.17.0",
     "@resvg/resvg-js": "^2.4.1",
-    "astro": "^7.4.7",
+    "astro": "^7.4.12",
     "drizzle-orm": "^0.45.2",
     "hast-util-to-html": "^9.0.5",
     "mdast-util-from-markdown": "^2.0.2",
@@ -51,7 +52,7 @@
     ]
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.9",
+    "@astrojs/ts-content-mapper": "0.2.0",
     "@infixer/cli": "workspace:*",
     "@tailwindcss/vite": "^4.2.4",
     "@types/mdast": "^4.0.4",
@@ -62,7 +63,7 @@
     "sharp": "^0.35.5",
     "tailwindcss": "^4.2.4",
     "tsx": "^4.23.1",
-    "typescript": "^5.9.3",
+    "typescript": "7.1.0-beta",
     "unist-util-visit": "^5.1.0",
     "wrangler": "^4.115.0"
   }

@@ -4,30 +4,38 @@
 // <dialog> の showModal() で開くので、外側の inert 化・Esc で閉じる・閉じたときのフォーカス復帰はブラウザが行う。
 ---
 
-<dialog id="search-modal" aria-labelledby="search-modal-title" class="w-full max-w-3xl m-auto px-4 bg-transparent">
-  <div class="bg-neutral-800 rounded-lg shadow-xl p-6">
+<dialog id="search-modal" aria-labelledby="search-modal-title" class="w-full max-w-2xl mx-auto mt-[12vh] px-4 bg-transparent">
+  <div class="overflow-hidden rounded-xl border border-neutral-700 bg-neutral-800 shadow-2xl">
     <h2 id="search-modal-title" class="sr-only">記事を検索</h2>
-    <div class="flex items-center mb-4">
-      <svg class="text-white mr-3" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <circle cx="11" cy="11" r="8"></circle>
-        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-      </svg>
-      <label for="search-input" class="sr-only">記事を検索</label>
-      <input
-        type="search"
-        id="search-input"
-        autofocus
-        placeholder="記事を検索..."
-        class="w-full px-3 py-2 rounded text-sm bg-neutral-700 text-white border border-neutral-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:border-neutral-500"
-      />
-      <button id="close-search" class="ml-3 text-white hover:text-gray-300" aria-label="検索を閉じる">
+    <div class="flex items-center gap-2 border-b border-neutral-700 p-3">
+      <div class="relative flex-1">
+        <svg class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <label for="search-input" class="sr-only">記事を検索</label>
+        <input
+          type="search"
+          id="search-input"
+          autofocus
+          autocomplete="off"
+          placeholder="記事を検索..."
+          class="w-full rounded-lg border border-neutral-600 bg-neutral-700 py-2.5 pl-10 pr-3 text-base text-white placeholder:text-gray-400 focus-visible:border-neutral-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+        />
+      </div>
+      <button
+        type="button"
+        id="close-search"
+        class="shrink-0 cursor-pointer rounded-lg p-2 text-gray-400 transition-colors hover:bg-neutral-700 hover:text-white focus-visible:outline-2 focus-visible:outline-blue-400"
+        aria-label="検索を閉じる"
+      >
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <line x1="18" y1="6" x2="6" y2="18"></line>
           <line x1="6" y1="6" x2="18" y2="18"></line>
         </svg>
       </button>
     </div>
-    <div id="search-results" class="overflow-y-auto"></div>
+    <div id="search-results" class="overflow-y-auto p-2 empty:hidden"></div>
   </div>
 </dialog>
 
@@ -93,13 +101,20 @@
     backdrop-filter: blur(4px);
   }
 
+  /* 自前の閉じるボタンと重複するので、type="search" の標準クリアボタン（×）は出さない */
+  #search-input::-webkit-search-cancel-button,
+  #search-input::-webkit-search-decoration {
+    appearance: none;
+  }
+
+  /* 結果の件数に応じて伸び、上限を超えたらスクロール */
   #search-results {
-    height: 60vh;
+    max-height: 60vh;
   }
 
   @media (max-width: 640px) {
     #search-results {
-      height: 40vh;
+      max-height: 50vh;
     }
   }
 </style>
